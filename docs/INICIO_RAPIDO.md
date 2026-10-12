@@ -2,6 +2,8 @@
 
 Instalación por sistema: [Windows](CONFIGURAR_WINDOWS.md) · [Linux](CONFIGURAR_LINUX.md).
 
+Para un arranque que prepara y comprueba la IA automáticamente, usa [Uso sencillo con IA](USO_SENCILLO_IA.md).
+
 ## 1. Abrir el proyecto
 
 Usa Python 3.11 o superior. Desde la carpeta del proyecto:

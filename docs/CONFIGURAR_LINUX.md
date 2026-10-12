@@ -1,6 +1,8 @@
 # Configurar el agente DSAR en Linux
 
-El backend, el portal, el panel DPO y la conexión con n8n se pueden ejecutar en Linux y Windows. Esta guía usa Bash y una instalación local de Flask y n8n. La rama de trabajo es `feat/flask-faiss-n8n`; main recibe los cambios al fusionar el PR.
+Para preparar IA y abrir el panel con un comando, sigue [Uso sencillo con IA](USO_SENCILLO_IA.md). Esta guía conserva los pasos manuales y la configuración de n8n.
+
+El backend, el portal, el panel DPO y la conexión con n8n se pueden ejecutar en Linux y Windows. Esta guía usa Bash y una instalación local de Flask y n8n. La versión integrada está en `main`.
 
 ## 1. Instalar Python y Git
 
@@ -21,7 +23,7 @@ Para una instalación nueva:
 ```bash
 mkdir -p ~/Proyectos
 cd ~/Proyectos
-git clone --branch feat/flask-faiss-n8n https://github.com/JeremyCruzGallegos/agente-dsar-iso27701.git agente-dsar
+git clone --branch main https://github.com/JeremyCruzGallegos/agente-dsar-iso27701.git agente-dsar
 cd agente-dsar
 python3 -m venv .venv
 .venv/bin/python -m pip install --upgrade pip

@@ -40,6 +40,12 @@ class ValidationTests(unittest.TestCase):
             self.assertEqual(len(engine.buscar_exacta('12345')), 1)
             self.assertEqual(engine.buscar_exacta('1234'), [])
 
+    def test_ai_status_unavailable_does_not_expose_paths(self):
+        with patch.object(engine, '_asegurar_indice', side_effect=engine.SearchUnavailable('/private/model')):
+            status = engine.estado_ia()
+            self.assertFalse(status['ready'])
+            self.assertNotIn('/private', json.dumps(status))
+
 
 VECTOR_DEPS = all(importlib.util.find_spec(name) for name in ('faiss', 'numpy'))
 
@@ -76,6 +82,31 @@ class IntegrationTests(unittest.TestCase):
                 with patch.object(engine, 'MODEL_NAME', 'otro-modelo'):
                     with self.assertRaises(engine.SearchUnavailable):
                         engine.buscar_pii_vectorial('acceso')
+
+    def test_semantic_search_scopes_by_complete_id_and_document(self):
+        import numpy as np
+
+        class Encoder:
+            def get_sentence_embedding_dimension(self):
+                return 2
+
+            def encode(self, texts, **kwargs):
+                return np.array([[1, 0] for text in texts])
+
+        with tempfile.TemporaryDirectory() as directory:
+            docs = Path(directory) / 'docs'; docs.mkdir()
+            (docs / 'titular.txt').write_text('DNI 12345\n' + 'contacto ' * 100, encoding='utf-8')
+            (docs / 'otro.txt').write_text('DNI 9123456 y otro titular', encoding='utf-8')
+            with patch.multiple(engine, DOCS_DIR=str(docs), DATA_DIR=directory,
+                INDEX_PATH=str(Path(directory)/'index'), META_PATH=str(Path(directory)/'meta'),
+                _model=Encoder(), _index=None, _chunks=[]):
+                engine.construir_indice()
+                scoped = engine.buscar_pii_vectorial('contacto', 5, user_id='12345')
+                self.assertGreater(len(scoped), 1)
+                self.assertTrue(all(row['fuente'] == 'titular.txt' for row in scoped))
+                self.assertEqual(engine.buscar_pii_vectorial('contacto', 5, user_id='1234'), [])
+                self.assertEqual(engine.buscar_pii_vectorial('contacto', 5, user_id='00000'), [])
+                self.assertEqual(engine.estado_ia()['documents'], 2)
 
 
 if __name__ == '__main__':

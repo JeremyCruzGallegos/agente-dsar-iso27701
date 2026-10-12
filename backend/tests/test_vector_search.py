@@ -63,3 +63,29 @@ def test_portal_assets_and_vector_cors(client):
         'Access-Control-Request-Headers': 'Content-Type,X-API-Key',
     })
     assert response.headers['Access-Control-Allow-Origin'] == 'http://localhost:5000'
+
+
+def test_ai_status_only_available_to_dpo(client):
+    assert client.get('/api/ai/status').status_code == 401
+    assert client.get('/api/ai/status', headers=SERVICE).status_code == 403
+    from tests.conftest import DPO
+    with patch('dsar_api.api.vector_search.estado_ia', return_value={
+        'ready': True, 'documents': 2, 'chunks': 4, 'message': 'IA lista'}):
+        result = client.get('/api/ai/status', headers=DPO)
+    assert result.status_code == 200
+    assert result.json['data']['ready'] is True
+    assert result.headers['Cache-Control'] == 'no-store'
+
+
+def test_search_with_subject_scope_validates_and_passes_identity(client):
+    with patch(SERVICE_SEARCH, return_value=[]) as search:
+        result = client.post('/api/vector-search', json={
+            'query': 'contacto', 'user_id': ' 72839102 '}, headers=SERVICE)
+        assert result.status_code == 200
+        search.assert_called_once_with('contacto', 5, user_id='72839102')
+    with patch(SERVICE_SEARCH) as search:
+        for value in ('', None, 'bad/id'):
+            result = client.post('/api/vector-search', json={
+                'query': 'contacto', 'user_id': value}, headers=SERVICE)
+            assert result.status_code == 422
+        search.assert_not_called()

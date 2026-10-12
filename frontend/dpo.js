@@ -2,6 +2,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const $ = id => document.getElementById(id);
     let key = '', offset = 0, selected = null, loadedSubject = null;
+    let reviewVersion = 0;
     const transitions = {
         'Recibido': ['En verificacion', 'En proceso', 'Rechazado'],
         'En verificacion': ['En proceso', 'Rechazado'],
@@ -11,6 +12,38 @@ document.addEventListener('DOMContentLoaded', () => {
         $('panelStatus').textContent = text;
         $('panelStatus').dataset.state = failed ? 'error' : 'success';
     }
+    function showPanel(id) {
+        document.querySelectorAll('.panel-section').forEach(panel => panel.classList.toggle('hidden', panel.id !== id));
+        document.querySelectorAll('[data-panel]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.panel === id)));
+        $(id).scrollIntoView?.({behavior: 'smooth', block: 'start'});
+    }
+    document.querySelectorAll('[data-panel]').forEach(button => { button.onclick = () => showPanel(button.dataset.panel); });
+    const guide = {
+        Acceso: 'Consulta los datos registrados y usa la IA para localizar documentos. Revisa los fragmentos antes de entregar información.',
+        Portabilidad: 'Consulta los datos y descarga el JSON portable. La IA te ayuda a localizar documentos adicionales para revisar.',
+        Rectificacion: 'Comprueba los datos actuales del titular y guarda la corrección autorizada en Datos del titular.',
+        Supresion: 'Revisa la identidad, los datos y los documentos relacionados. La supresión de la base respeta los bloqueos de retención; los documentos se tratan aparte.',
+    };
+    function field(container, name, value) {
+        const term = document.createElement('dt'), description = document.createElement('dd');
+        term.textContent = name; description.textContent = value ?? 'Sin dato'; container.append(term, description);
+    }
+    async function checkAI() {
+        $('aiStatus').textContent = 'Comprobando modelo e índice local…';
+        $('aiStatus').dataset.state = 'pending';
+        try {
+            const result = await api('/ai/status');
+            $('aiStatus').textContent = result.data.ready
+                ? `IA lista · ${result.data.documents} documentos · ${result.data.chunks} fragmentos`
+                : result.data.message;
+            $('aiStatus').dataset.state = result.data.ready ? 'success' : 'error';
+        } catch (error) {
+            if (!key) return;
+            $('aiStatus').textContent = 'No se pudo comprobar la IA. Inicia el proyecto con iniciar.py y vuelve a comprobar.';
+            $('aiStatus').dataset.state = 'error';
+        }
+    }
+    $('refreshAI').onclick = checkAI;
     async function api(path, options = {}) {
         const sessionKey = key;
         const controller = new AbortController();
@@ -47,9 +80,18 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
     async function detail(ticket) {
+        const version = ++reviewVersion;
         const result = await api(`/requests/${encodeURIComponent(ticket)}`);
+        if (version !== reviewVersion) return;
         selected = result.data;
         $('detailTitle').textContent = selected.ticket_id;
+        $('caseSummary').textContent = `${selected.request_type} · Documento ${selected.user_id} · ${selected.status}`;
+        $('caseGuide').textContent = guide[selected.request_type];
+        $('subjectId').value = selected.user_id;
+        $('query').value = 'datos de contacto, información personal y solicitudes';
+        $('scopeSubject').disabled = false; $('scopeSubject').checked = true;
+        $('aiCase').textContent = `Solicitud ${selected.ticket_id} · ${selected.request_type} · Titular ${selected.user_id}`;
+        $('searchResults').replaceChildren(); $('searchNotice').textContent = '';
         $('detailText').textContent = selected.details || 'Sin detalles adicionales.';
         $('resolutionNote').value = selected.resolution_note || '';
         $('newStatus').replaceChildren();
@@ -59,8 +101,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         $('saveStatus').disabled = transitions[selected.status].length === 0;
         const logs = await api(`/audit-log?ticket_id=${encodeURIComponent(ticket)}`);
-        $('auditEntries').textContent = JSON.stringify(logs.data, null, 2);
+        if (version !== reviewVersion) return;
+        $('auditEntries').replaceChildren();
+        const actions = {REQUEST_CREATED: 'Solicitud registrada', REQUEST_STATUS_CHANGE: 'Estado actualizado',
+            USER_DATA_ACCESS: 'Datos consultados', USER_DATA_PORTABILITY: 'Datos descargados',
+            USER_RECTIFIED: 'Datos rectificados', USER_ERASURE: 'Supresión solicitada'};
+        for (const log of logs.data) {
+            const entry = document.createElement('p');
+            entry.textContent = `${new Date(log.timestamp).toLocaleString()} · ${actions[log.action] || log.action} · ${log.outcome === 'success' ? 'Completado' : log.outcome === 'denied' ? 'Denegado' : log.outcome}`;
+            $('auditEntries').append(entry);
+        }
         $('requestDetail').classList.remove('hidden');
+        $('requestDetail').scrollIntoView?.({behavior: 'smooth', block: 'start'});
+        try { await loadSubject(); }
+        catch (error) { if (version === reviewVersion) $('subjectData').textContent = error.message; }
     }
     async function loadRequests() {
         const params = new URLSearchParams({ limit: '20', offset: String(offset) });
@@ -100,16 +154,19 @@ document.addEventListener('DOMContentLoaded', () => {
             $('apiKey').value = ''; $('loginForm').classList.add('hidden');
             $('logoutButton').classList.remove('hidden'); $('workspace').classList.remove('hidden');
             message('Conectado al backend.');
+            showPanel('requestsPanel'); checkAI();
         } catch (error) { key = ''; throw error; }
     });
     $('logoutButton').onclick = () => {
-        key = ''; selected = null; loadedSubject = null; offset = 0;
+        key = ''; selected = null; loadedSubject = null; offset = 0; reviewVersion++;
         $('workspace').classList.add('hidden'); $('requestDetail').classList.add('hidden');
         $('rectifyForm').classList.add('hidden'); $('logoutButton').classList.add('hidden'); $('loginForm').classList.remove('hidden');
-        for (const id of ['subjectData', 'searchResults', 'auditEntries', 'detailText', 'detailTitle', 'redactResult', 'pageInfo']) $(id).textContent = '';
+        for (const id of ['subjectData', 'searchResults', 'auditEntries', 'detailText', 'detailTitle', 'redactResult', 'pageInfo',
+                         'caseSummary', 'caseGuide', 'aiCase', 'aiStatus', 'searchNotice']) $(id).textContent = '';
         for (const id of ['subjectId', 'subjectName', 'subjectEmail', 'query', 'redactText', 'redactValues', 'resolutionNote', 'apiKey']) $(id).value = '';
         $('dpoTableBody').replaceChildren(); $('newStatus').replaceChildren();
         $('portableButton').disabled = true; $('eraseButton').disabled = true;
+        $('scopeSubject').checked = false; $('scopeSubject').disabled = true;
         message('Sesión cerrada.');
     };
     operation($('filterForm'), async () => { offset = 0; await loadRequests(); });
@@ -125,16 +182,25 @@ document.addEventListener('DOMContentLoaded', () => {
         await detail(ticket); await loadRequests(); message('Estado actualizado.');
     });
     async function loadSubject() {
+        const documentId = $('subjectId').value.trim();
         loadedSubject = null; $('portableButton').disabled = true; $('eraseButton').disabled = true;
         $('subjectData').textContent = ''; $('rectifyForm').classList.add('hidden');
-        const result = await api(`/user-data?user_id=${encodeURIComponent($('subjectId').value.trim())}`);
+        const result = await api(`/user-data?user_id=${encodeURIComponent(documentId)}`);
+        if (documentId !== $('subjectId').value.trim()) return;
         loadedSubject = result.data;
-        $('subjectData').textContent = JSON.stringify(loadedSubject, null, 2);
+        $('subjectData').replaceChildren();
+        const summary = document.createElement('dl'); summary.className = 'data-summary';
+        field(summary, 'Nombre', loadedSubject.nombre); field(summary, 'Documento', loadedSubject.document_id);
+        field(summary, 'Correo', loadedSubject.email); field(summary, 'Estado', loadedSubject.activo ? 'Activo' : 'Anonimizado');
+        field(summary, 'Solicitudes vinculadas', String(loadedSubject.solicitudes?.length || 0));
+        $('subjectData').append(summary);
         $('subjectName').value = loadedSubject.nombre || ''; $('subjectEmail').value = loadedSubject.email || '';
         $('portableButton').disabled = false; $('eraseButton').disabled = !loadedSubject.activo;
         $('rectifyForm').classList.remove('hidden');
     }
     operation($('subjectForm'), loadSubject);
+    $('caseSubject').onclick = () => showPanel('subjectPanel');
+    $('caseAI').onclick = () => { showPanel('aiPanel'); $('searchForm').requestSubmit(); };
     $('portableButton').onclick = async () => {
         if (!loadedSubject) return;
         try {
@@ -158,14 +224,40 @@ document.addEventListener('DOMContentLoaded', () => {
             loadedSubject = null; $('subjectData').textContent = 'Titular anonimizado.';
             $('rectifyForm').classList.add('hidden'); $('portableButton').disabled = true;
             $('subjectName').value = ''; $('subjectEmail').value = '';
-            await loadRequests(); $('requestDetail').classList.add('hidden'); selected = null; message('Supresión completada.');
+            await loadRequests(); $('requestDetail').classList.add('hidden'); selected = null; reviewVersion++;
+            $('searchResults').replaceChildren(); $('searchNotice').textContent = ''; $('aiCase').textContent = 'Titular anonimizado. Los documentos externos requieren revisión y actualización del índice.';
+            $('scopeSubject').checked = false; $('scopeSubject').disabled = true;
+            $('redactText').value = ''; $('redactValues').value = ''; $('redactResult').textContent = '';
+            message('Supresión completada.');
         } catch (error) { message(error.message, true); $('eraseButton').disabled = false; }
     };
     operation($('searchForm'), async () => {
-        $('searchResults').textContent = '';
-        const result = await api('/vector-search', { method: 'POST', body: JSON.stringify({ query: $('query').value, k: 5 }) });
-        $('searchResults').textContent = JSON.stringify(result.data, null, 2);
+        const version = reviewVersion;
+        $('searchResults').replaceChildren(); $('searchNotice').textContent = 'Buscando con el modelo local…';
+        const payload = {query: $('query').value, k: 5};
+        if ($('scopeSubject').checked && selected) payload.user_id = selected.user_id;
+        let result;
+        try { result = await api('/vector-search', { method: 'POST', body: JSON.stringify(payload) }); }
+        catch (error) { if (key && version === reviewVersion) $('searchNotice').textContent = 'La búsqueda no se pudo completar. Comprueba el estado de IA de arriba.'; throw error; }
+        if (version !== reviewVersion) return;
+        $('searchNotice').textContent = result.data.count
+            ? `${result.data.count} fragmentos encontrados. Revisa su pertinencia y los datos de terceros antes de utilizarlos. La similitud mide relación temática, no certeza.`
+            : payload.user_id ? 'No hay documentos indexados que mencionen este ID. Añade los documentos del titular y vuelve a iniciar para actualizar el índice.' : 'No se encontraron fragmentos.';
+        for (const item of result.data.results) {
+            const card = document.createElement('article'); card.className = 'search-result';
+            const title = document.createElement('h3'); title.textContent = item.fuente;
+            const score = document.createElement('p'); score.className = 'help'; score.textContent = `Similitud: ${Number(item.score).toFixed(3)}`;
+            const text = document.createElement('p'); text.className = 'excerpt'; text.textContent = item.texto;
+            const copy = document.createElement('button'); copy.type = 'button'; copy.textContent = 'Revisar y ocultar datos de este fragmento';
+            copy.onclick = () => { $('redactText').value = item.texto;
+                $('redactValues').value = loadedSubject?.document_id === selected?.user_id && loadedSubject?.nombre ? loadedSubject.nombre : '';
+                $('redactResult').textContent = ''; $('redactText').focus(); };
+            card.append(title, score, text, copy); $('searchResults').append(card);
+        }
     });
+    document.querySelectorAll('[data-query]').forEach(button => { button.onclick = () => {
+        $('query').value = button.dataset.query; $('searchForm').requestSubmit();
+    }; });
     operation($('redactForm'), async () => {
         const result = await api('/redact', { method: 'POST', body: JSON.stringify({ text: $('redactText').value,
             values: $('redactValues').value.split('\n').map(value => value.trim()).filter(Boolean) }) });

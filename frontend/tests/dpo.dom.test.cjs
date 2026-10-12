@@ -60,6 +60,38 @@ test('portal y DPO usan Flask real: ticket, estados, datos, retención, PDF y se
         await until(() => !$('requestDetail').classList.contains('hidden'));
         assert.equal($('detailText').querySelector('img'), null);
         assert.match($('detailText').textContent, /<img/);
+        await until(() => $('subjectData').textContent.includes('Juan Pérez'));
+        assert.equal($('subjectId').value, '72839102');
+        const originalFetch = panel.window.fetch;
+        let searchPayload, searchMode = 'results';
+        panel.window.fetch = async (url, options) => {
+            if (url !== '/api/vector-search') return originalFetch(url, options);
+            searchPayload = JSON.parse(options.body);
+            if (searchMode === 'failure') return {ok:false, json:async()=>({error:{message:'Prepara la IA local.'}})};
+            const results = searchMode === 'empty' ? [] : [{fuente:'contrato.txt',
+                texto:'Juan Pérez <img src=x onerror=alert(1)> 72839102', score:0.8}];
+            return {ok:true, json:async()=>({data:{results,count:results.length}})};
+        };
+        $('caseAI').click();
+        await until(() => $('searchResults').querySelector('article'));
+        assert.equal($('aiPanel').classList.contains('hidden'), false);
+        assert.equal(searchPayload.user_id, '72839102');
+        assert.equal($('searchResults').querySelector('img'), null);
+        assert.match($('searchResults').textContent, /Similitud: 0.800/);
+        $('searchResults').querySelector('button').click();
+        assert.match($('redactText').value, /72839102/);
+        assert.equal($('redactValues').value, 'Juan Pérez');
+        await until(() => !$('searchButton').disabled);
+        searchMode = 'empty'; submit('searchForm');
+        await until(() => $('searchNotice').textContent.includes('No hay documentos'));
+        assert.equal($('searchResults').childElementCount, 0);
+        await until(() => !$('searchButton').disabled);
+        searchMode = 'failure'; submit('searchForm');
+        await until(() => $('panelStatus').textContent === 'Prepara la IA local.');
+        assert.match($('searchNotice').textContent, /no se pudo completar/);
+        assert.equal($('searchResults').childElementCount, 0);
+        panel.window.fetch = originalFetch;
+        panel.window.document.querySelector('[data-panel="requestsPanel"]').click();
         $('newStatus').value = 'En proceso'; submit('statusForm');
         await until(() => $('panelStatus').textContent === 'Estado actualizado.');
         await until(() => !$('saveStatus').disabled);
@@ -89,5 +121,7 @@ test('portal y DPO usan Flask real: ticket, estados, datos, retención, PDF y se
         assert.match($('dpoTableBody').textContent, /ANON-/);
         $('logoutButton').click(); assert.equal($('workspace').classList.contains('hidden'), true);
         assert.equal($('subjectData').textContent, ''); assert.equal($('dpoTableBody').textContent, '');
+        assert.equal($('searchResults').textContent, ''); assert.equal($('aiCase').textContent, '');
+        assert.equal($('scopeSubject').disabled, true);
     } finally { portal?.window.close(); panel?.window.close(); server.kill('SIGTERM'); }
 });

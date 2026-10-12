@@ -4,15 +4,15 @@ Portal para registrar solicitudes de derechos del titular, panel DPO y API Flask
 
 ## Arranque rápido
 
-Desde la raíz, con Python 3.11+ y un entorno virtual activado:
+Desde la raíz, con Python 3.11+:
 
 ```bash
-python -m pip install -r backend/requirements.txt
-python scripts/setup.py --demo
-python app.py
+python3 iniciar.py --demo
 ```
 
-Abre http://127.0.0.1:5000 y el panel http://127.0.0.1:5000/dpo. La clave del panel está en `DPO_API_KEY` de `backend/.env`, generado automáticamente. El registro funciona inicialmente sin n8n. Los archivos frontend se sirven desde su directorio real, también en Windows y en descargas ZIP.
+En Windows usa `py -3.12 iniciar.py --demo`. El comando prepara el entorno, las dependencias, el modelo y el índice, comprueba una búsqueda real y abre el panel. La primera ejecución requiere Internet; las siguientes reutilizan el modelo. La clave DPO aparece sólo en la terminal interactiva local y también está en `backend/.env`. Los datos existentes se conservan. El registro funciona inicialmente sin n8n.
+
+**[Uso sencillo con IA: iniciar y revisar una solicitud](docs/USO_SENCILLO_IA.md)**
 
 **[Configuración en Windows](docs/CONFIGURAR_WINDOWS.md)** · **[Configuración en Linux](docs/CONFIGURAR_LINUX.md)** · **[Instrucciones completas, n8n, Docker y solución de conexión](docs/INICIO_RAPIDO.md)** · **[Estado y validaciones](docs/ESTADO.md)**
 
@@ -22,7 +22,7 @@ Abre http://127.0.0.1:5000 y el panel http://127.0.0.1:5000/dpo. La clave del pa
 - DPO autenticado con lista/paginación/filtros, cambios de estado y auditoría.
 - Acceso, portabilidad JSON, rectificación y anonimización de registros SQL sujeta a retención.
 - Constancias PDF sin reproducir datos personales ni detalles libres del expediente.
-- Búsqueda de documentos con FAISS y modelo multilingüe local; ocultación asistida de PII para revisión.
+- Panel guiado por solicitud, datos legibles y búsqueda de documentos con IA local, filtro por ID, tarjetas de resultados y paso a ocultación asistida de PII.
 - Flujo n8n importable y autenticado para registrar solicitudes. La conexión pasa por Flask para mantener las credenciales de servicios fuera del navegador.
 - Scripts de configuración, preparación de IA, diagnóstico y pruebas en GitHub Actions.
 
@@ -36,6 +36,7 @@ backend/          API, modelos, servicios, pruebas y .env.example
 ai_engine/        Embeddings locales, índice FAISS y documentos ficticios
 n8n_workflows/    dsar-request.json importable
 scripts/          setup.py, prepare_ai.py y diagnose.py
+iniciar.py        Preparación de IA y arranque con un comando
 docs/             Inicio rápido y estado verificado
 app.py            Arranque desde la raíz
 Dockerfile        Backend con Gunicorn y soporte PDF
@@ -57,6 +58,7 @@ compose.yaml      Backend y n8n con volúmenes persistentes
 | PATCH `/api/rectify-user` | Servicio / DPO | Cambios de nombre/correo |
 | POST `/api/delete-user` | Servicio / DPO | Anonimización con control de retención |
 | POST `/api/vector-search` | Servicio / DPO | `{"query":"texto","k":5}`; índice/modelo deben estar preparados |
+| GET `/api/ai/status` | DPO | Comprueba modelo/índice reales; muestra disponibilidad y recuentos |
 | POST `/api/redact` | Servicio / DPO | `{"text":"texto","values":["nombre"]}`; revisión obligatoria |
 | GET `/api/audit-log` | DPO | Bitácora con filtros y paginación |
 
@@ -70,3 +72,5 @@ python scripts/prepare_ai.py
 ```
 
 Reinicia Flask y utiliza la búsqueda del panel. Una respuesta 503 identifica modelo/índice/dependencias ausentes; no se sustituyen los resultados por datos inventados.
+
+La API vector-search admite `user_id` opcional para ordenar sólo fragmentos de documentos que mencionan literalmente ese ID. El filtro no acredita identidad ni evita que un archivo contenga datos de terceros; el DPO revisa los resultados. Con `iniciar.py`, la preparación y actualización del índice se realizan antes de arrancar.

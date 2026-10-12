@@ -160,21 +160,47 @@ def _asegurar_indice():
         _index, _chunks = index, chunks
 
 
-def buscar_pii_vectorial(query_text, k=5):
+def estado_ia():
+    """Comprueba modelo e índice reales, sin descargas ni rutas en la respuesta."""
+    try:
+        with _lock:
+            _asegurar_indice()
+            return {'ready': True, 'chunks': len(_chunks),
+                    'documents': len({c['fuente'] for c in _chunks}),
+                    'message': 'IA local lista para buscar documentos.'}
+    except SearchUnavailable:
+        return {'ready': False, 'chunks': 0, 'documents': 0,
+                'message': 'La IA necesita preparación. Inicia el proyecto con iniciar.py.'}
+    except Exception:
+        return {'ready': False, 'chunks': 0, 'documents': 0,
+                'message': 'No se pudo comprobar la IA. Vuelve a preparar el modelo y el índice.'}
+
+
+def buscar_pii_vectorial(query_text, k=5, *, user_id=None):
     """Búsqueda por significado. Devuelve lista de {texto, fuente, score}."""
     query_text = validar_consulta(query_text, k)
     with _lock:
         _asegurar_indice()
+        # Seleccionar documentos por una referencia literal, antes de ordenarlos
+        # por significado. La similitud por sí sola no identifica al titular.
+        sources = None
+        if user_id is not None:
+            user_id = validar_consulta(user_id)
+            pattern = re.compile(r'(?<!\w)' + re.escape(user_id) + r'(?!\w)', re.IGNORECASE)
+            sources = {c['fuente'] for c in _chunks if pattern.search(c['texto'])}
+            if not sources:
+                return []
         vector = _get_model().encode([query_text], normalize_embeddings=True)
         vector = np.ascontiguousarray(vector, dtype='float32')
         if vector.shape != (1, _index.d) or not np.isfinite(vector).all():
             raise SearchUnavailable('Embedding local inválido.')
-        scores, ids = _index.search(vector, min(k, _index.ntotal))
+        scores, ids = _index.search(vector, _index.ntotal if sources is not None else min(k, _index.ntotal))
         return [
             {'texto': _chunks[i]['texto'], 'fuente': _chunks[i]['fuente'],
              'score': float(s)}
             for s, i in zip(scores[0], ids[0]) if 0 <= i < len(_chunks) and np.isfinite(s)
-        ]
+            and (sources is None or _chunks[i]['fuente'] in sources)
+        ][:k]
 
 
 def buscar_exacta(termino):

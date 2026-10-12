@@ -1,6 +1,8 @@
 # Configurar el agente DSAR en Windows
 
-Estas instrucciones usan Windows 10/11 y PowerShell. El proyecto se obtiene desde `feat/flask-faiss-n8n`; main recibe los cambios al fusionar el PR.
+Para preparar IA y abrir el panel con un comando, sigue [Uso sencillo con IA](USO_SENCILLO_IA.md). Esta guía conserva los pasos manuales y la configuración de n8n.
+
+Estas instrucciones usan Windows 10/11 y PowerShell. El proyecto integrado se obtiene desde `main`.
 
 ## 1. Python y Node.js
 
@@ -23,14 +25,14 @@ npm.cmd --version
 ## 2. Descargar la rama correcta
 
 Abre:
-https://github.com/JeremyCruzGallegos/agente-dsar-iso27701/tree/feat/flask-faiss-n8n
+https://github.com/JeremyCruzGallegos/agente-dsar-iso27701/tree/main
 
 Selecciona **Code → Download ZIP**. Extrae el contenido del proyecto en `C:\Proyectos\agente-dsar`. Esa carpeta debe contener `app.py`, `backend`, `frontend` y `scripts`, sin una segunda carpeta del proyecto anidada.
 
 Si ya tienes Git instalado, también puedes clonar directamente la rama:
 
 ```powershell
-git clone --branch feat/flask-faiss-n8n https://github.com/JeremyCruzGallegos/agente-dsar-iso27701.git C:\Proyectos\agente-dsar
+git clone --branch main https://github.com/JeremyCruzGallegos/agente-dsar-iso27701.git C:\Proyectos\agente-dsar
 ```
 
 ## 3. Instalar y preparar Flask

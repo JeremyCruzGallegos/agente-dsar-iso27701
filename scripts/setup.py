@@ -17,7 +17,7 @@ def main():
     from dotenv import dotenv_values, set_key
     env = ROOT / 'backend' / '.env'
     if not env.exists():
-        env.write_text((ROOT / 'backend' / '.env.example').read_text(), encoding='utf-8')
+        env.write_text((ROOT / 'backend' / '.env.example').read_text(encoding='utf-8'), encoding='utf-8')
     if os.name != 'nt':
         env.chmod(0o600)
     existing = dotenv_values(env)

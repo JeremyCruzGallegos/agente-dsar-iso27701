@@ -22,7 +22,7 @@ jobs:
       - run: python -m pytest backend/tests -q
       - run: python -m unittest ai_engine.test_search_engine -v
       - run: npm test
-      - run: python -m compileall -q app.py backend ai_engine scripts
+      - run: python -m compileall -q iniciar.py app.py backend ai_engine scripts
       - run: node --check frontend/dpo.js
       - run: git diff --check
       - run: python scripts/setup.py --demo

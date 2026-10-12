@@ -4,6 +4,7 @@ from ai_engine.search_engine import SearchUnavailable, buscar_pii_vectorial, val
 from ..errors import ApiError, ValidationError
 from . import audit_service
 from .validators import require_json
+from .validators import clean_document_id
 
 
 def search(payload):
@@ -13,8 +14,10 @@ def search(payload):
         query = validar_consulta(query, k)
     except ValueError as exc:
         raise ValidationError(str(exc)) from exc
+    user_id = clean_document_id(payload['user_id']) if 'user_id' in payload else None
     try:
-        results = buscar_pii_vectorial(query, k)
+        results = (buscar_pii_vectorial(query, k, user_id=user_id) if user_id is not None
+                   else buscar_pii_vectorial(query, k))
     except SearchUnavailable as exc:
         raise ApiError(str(exc), code='vector_search_unavailable', status_code=503) from exc
     except Exception as exc:

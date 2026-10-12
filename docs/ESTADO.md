@@ -34,6 +34,8 @@ Base utilizada: rama `feat/flask-faiss-n8n`, commit `1fe5693`, que contenía ava
 
 ## Configuración que debes hacer en tu computadora
 
+Para simplificar esos pasos, `python3 iniciar.py --demo` crea/reutiliza el entorno, prepara dependencias y modelo, actualiza el índice, comprueba una búsqueda real y abre el panel. Consulta [Uso sencillo con IA](USO_SENCILLO_IA.md). El panel muestra el estado del modelo y organiza la atención por solicitud: datos del titular, búsqueda de documentos por ID, tarjetas con fuentes y revisión de fragmentos.
+
 1. Instalar dependencias y ejecutar `scripts/setup.py` para generar tus propias claves. Las claves y la BD local usadas en las pruebas no se incluyen en Git.
 2. Preparar modelo/índice con `scripts/prepare_ai.py` para usar búsqueda semántica. Tampoco se incluyen los pesos ni el índice en Git.
 3. Para modo n8n, importar el flujo, seleccionar las dos credenciales, revisar hostname/puerto, publicar y cambiar DSAR_INTAKE_MODE. El modo directo funciona antes de ese paso.
@@ -47,3 +49,5 @@ El DPO conserva la verificación de identidad y la decisión de atender el derec
 ## Publicación en GitHub
 
 Repositorio de integración: `JeremyCruzGallegos/agente-dsar-iso27701`. Rama: `feat/flask-faiss-n8n`. Base de la continuación: `1fe5693`, conservada como padre del commit publicado. La incorporación a main se revisa mediante pull request. El repositorio original de Ypss8522 conserva su estado independiente.
+
+El PR #1 fue fusionado en main y su rama se eliminó. La mejora del arranque y panel con IA se desarrolla en `feat/dpo-ia-guiada`, partiendo de main (`1b85010`). Se verificaron 58 pruebas de backend/arranque, 8 de motor y 7 JavaScript/DOM. Con el modelo multilingüe real se comprobaron 5 documentos y 13 fragmentos; la búsqueda por ID `72839102` devolvió 3 fragmentos de su contrato y un ID sin documentos devolvió cero resultados. También se verificó que detener el lanzador libera el puerto de Flask.

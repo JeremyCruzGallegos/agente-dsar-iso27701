@@ -82,6 +82,10 @@ button:hover {
     display: none;
 }
 
+button:disabled { opacity: 0.6; cursor: wait; }
+#formStatus[data-state="error"] { color: #a71925; }
+#formStatus[data-state="pending"] { color: var(--primary); }
+
 .ticket-box {
     background-color: #EBF3F5;
     padding: 15px;

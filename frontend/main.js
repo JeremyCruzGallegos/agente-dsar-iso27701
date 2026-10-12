@@ -1,58 +1,83 @@
+'use strict';
+
 document.addEventListener('DOMContentLoaded', () => {
     const dsarForm = document.getElementById('dsarForm');
     const responseCard = document.getElementById('responseCard');
     const ticketIdSpan = document.getElementById('ticketId');
     const btnSubmit = document.getElementById('btnSubmit');
+    const status = document.getElementById('formStatus');
+    if (!dsarForm || !responseCard || !ticketIdSpan || !btnSubmit || !status) return;
 
-    // Cambia esta URL por el puerto donde tu compañero levante n8n
-    const N8N_WEBHOOK_URL = 'http://localhost:5678/webhook/dsar-request';
+    const webhookUrl = dsarForm.dataset.webhookUrl || 'http://localhost:5678/webhook/dsar-request';
+    let sending = false;
 
-    dsarForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
+    dsarForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (sending) return;
+        for (const id of ['userId', 'email', 'details']) {
+            const input = document.getElementById(id);
+            input.value = input.value.trim();
+        }
+        if (!dsarForm.reportValidity()) return;
 
-        // 1. Deshabilitar botón para evitar envíos dobles
-        btnSubmit.disabled = true;
-        btnSubmit.textContent = 'Enviando solicitud al agente...';
-
-        // 2. Construir el objeto JSON
         const payload = {
             user_id: document.getElementById('userId').value,
             email: document.getElementById('email').value,
             request_type: document.getElementById('requestType').value,
             details: document.getElementById('details').value,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
         };
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        const buttonText = btnSubmit.textContent;
+        sending = true;
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = 'Enviando solicitud al agente...';
+        responseCard.classList.add('hidden');
+        ticketIdSpan.textContent = '';
+        status.dataset.state = 'pending';
+        status.textContent = 'Enviando solicitud…';
 
         try {
-            // 3. Enviar petición HTTP POST al Webhook de n8n
-            const response = await fetch(N8N_WEBHOOK_URL, {
+            const response = await fetch(webhookUrl, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                signal: controller.signal,
             });
-
             if (!response.ok) {
-                throw new Error('No se pudo conectar con el agente n8n.');
+                throw new Error(`n8n respondió con un error HTTP ${response.status}.`);
             }
-
-            const result = await response.json();
-
-            // 4. Mostrar respuesta con el Ticket de n8n
-            ticketIdSpan.textContent = result.ticket_id || ('#DSAR-' + Math.floor(1000 + Math.random() * 9000));
+            let result;
+            try {
+                result = await response.json();
+            } catch (error) {
+                if (error.name === 'AbortError') throw error;
+                throw new Error('n8n no devolvió JSON válido. Verifica si se creó el ticket antes de reenviar.');
+            }
+            if (!result || result.status === 'error' ||
+                typeof result.ticket_id !== 'string' || !result.ticket_id.trim()) {
+                throw new Error('n8n no confirmó un ticket. Comprueba el flujo antes de reenviar.');
+            }
+            ticketIdSpan.textContent = result.ticket_id;
             dsarForm.classList.add('hidden');
             responseCard.classList.remove('hidden');
-
+            status.dataset.state = 'success';
+            status.textContent = 'Solicitud registrada correctamente.';
         } catch (error) {
-            console.error('Error:', error);
-            alert('Atención: Tu solicitud fue procesada preliminarmente. (Asegúrate de que n8n esté corriendo en el puerto 5678).');
-            ticketIdSpan.textContent = '#DSAR-' + Math.floor(1000 + Math.random() * 9000);
-            dsarForm.classList.add('hidden');
-            responseCard.classList.remove('hidden');
+            status.dataset.state = 'error';
+            if (error.name === 'AbortError') {
+                status.textContent = 'La respuesta tardó demasiado. Comprueba si se creó el ticket antes de reenviar.';
+            } else if (error instanceof TypeError) {
+                status.textContent = 'No se pudo conectar con n8n. Comprueba la conexión y CORS, y si se creó el ticket antes de reenviar.';
+            } else {
+                status.textContent = error.message;
+            }
         } finally {
+            clearTimeout(timeout);
+            sending = false;
             btnSubmit.disabled = false;
-            btnSubmit.textContent = 'Enviar Solicitud al Agente';
+            btnSubmit.textContent = buttonText;
         }
     });
 });

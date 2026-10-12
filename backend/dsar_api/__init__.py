@@ -6,15 +6,18 @@ from pathlib import Path
 from dotenv import load_dotenv
 from flask import Flask
 
-from .config import ProductionConfig, get_config
 from .errors import register_error_handlers
 from .extensions import cors, db
 
 
 def create_app(config_name: str | None = None) -> Flask:
     load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+    # La configuración lee el entorno al importar: cargar .env antes.
+    from .config import ProductionConfig, get_config
 
-    app = Flask(__name__, instance_relative_config=False)
+    static_dir = Path(__file__).resolve().parents[2] / 'static'
+    app = Flask(__name__, instance_relative_config=False,
+                static_folder=str(static_dir), static_url_path='/static')
     config = get_config(config_name)
     if config is ProductionConfig:
         ProductionConfig.validate()
@@ -37,6 +40,14 @@ def create_app(config_name: str | None = None) -> Flask:
     register_blueprints(app)
     register_error_handlers(app)
     register_cli(app)
+
+    @app.get('/')
+    def portal():
+        return app.send_static_file('index.html')
+
+    @app.get('/dpo')
+    def dpo_panel():
+        return app.send_static_file('dpo.html')
 
     if app.config.get("TESTING"):
         with app.app_context():

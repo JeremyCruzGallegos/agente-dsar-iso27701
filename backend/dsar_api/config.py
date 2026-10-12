@@ -24,7 +24,8 @@ class BaseConfig:
     # Clave para referenciar al titular en la bitácora sin guardar su documento en claro.
     AUDIT_HASH_KEY = os.getenv("AUDIT_HASH_KEY", "")
 
-    CORS_ORIGINS = _csv(os.getenv("CORS_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000"))
+    CORS_ORIGINS = _csv(os.getenv("CORS_ORIGINS", "http://localhost:5000,http://127.0.0.1:5000,http://localhost:8000,http://127.0.0.1:8000"))
+    MAX_CONTENT_LENGTH = 64 * 1024
 
     # Plazo legal para responder una solicitud (días).
     DSAR_SLA_DAYS = int(os.getenv("DSAR_SLA_DAYS", "30"))

@@ -19,5 +19,7 @@ Thumbs.db
 
 # Configuración de VS Code local
 .vscode/
-
-ai_engine/data/
+# Secretos y caches
+.env
+.pytest_cache/
+backend/instance/

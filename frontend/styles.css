@@ -1,0 +1,117 @@
+:root {
+    --primary: #1B365D;
+    --secondary: #2A7B88;
+    --bg: #F4F7FA;
+    --card-bg: #FFFFFF;
+    --text: #333333;
+}
+
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.container.wide {
+    max-width: 900px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+header h1 {
+    color: var(--primary);
+    margin-bottom: 5px;
+}
+
+.card {
+    background: var(--card-bg);
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: var(--primary);
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #CCCCCC;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 14px;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background-color: var(--secondary);
+}
+
+.hidden {
+    display: none;
+}
+
+.ticket-box {
+    background-color: #EBF3F5;
+    padding: 15px;
+    border-left: 4px solid var(--secondary);
+    margin: 15px 0;
+}
+
+.dpo-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.dpo-table th, .dpo-table td {
+    padding: 10px;
+    border-bottom: 1px solid #EEE;
+    text-align: left;
+}
+
+.dpo-table th {
+    background-color: var(--primary);
+    color: white;
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: white;
+}
+
+.badge.success {
+    background-color: #27AE60;
+}

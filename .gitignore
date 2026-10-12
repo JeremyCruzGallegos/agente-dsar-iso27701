@@ -1,0 +1,21 @@
+# Python y entornos virtuales
+venv/
+env/
+__pycache__/
+*.py[cod]
+
+# Base de datos local
+*.db
+*.sqlite3
+
+# Archivos de la IA y vectores pesados
+*.index
+*.bin
+models_local/
+
+# Archivos de sistema operativo
+.DS_Store
+Thumbs.db
+
+# Configuración de VS Code local
+.vscode/

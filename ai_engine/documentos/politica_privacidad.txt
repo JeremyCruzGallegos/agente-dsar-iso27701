@@ -1,0 +1,23 @@
+POLÍTICA DE PRIVACIDAD Y PROTECCIÓN DE DATOS PERSONALES
+TecnoServ Perú S.A.C.
+
+1. DATOS QUE RECOPILAMOS
+Recopilamos datos de identificación (nombre, DNI), datos de contacto (correo electrónico, teléfono, dirección), datos de facturación y datos de navegación asociados al servicio contratado.
+
+2. FINALIDAD DEL TRATAMIENTO
+Los datos personales se utilizan para ejecutar el contrato, emitir comprobantes de pago, brindar soporte técnico y cumplir obligaciones legales.
+
+3. PLAZO DE CONSERVACIÓN
+La empresa conserva los datos personales de los clientes durante 5 años después de finalizada la relación contractual. Los datos de facturación se conservan durante 10 años por obligación tributaria. Pasado ese plazo, los datos son eliminados o anonimizados.
+
+4. DERECHOS DE LOS TITULARES
+Los titulares pueden solicitar el acceso a sus datos, la rectificación de datos incorrectos, la supresión de sus datos, la portabilidad y la oposición al tratamiento. Para ejercer estos derechos deben enviar una solicitud con su documento de identidad.
+
+5. PLAZO DE RESPUESTA
+La empresa responderá a las solicitudes de derechos en un plazo máximo de 30 días calendario desde su recepción.
+
+6. TRANSFERENCIA A TERCEROS
+Los datos podrán compartirse con proveedores de servicios de pago y de soporte técnico, quienes se comprometen a mantener la confidencialidad.
+
+7. OFICIAL DE PROTECCIÓN DE DATOS
+Para consultas puede escribir al correo dpo@tecnoserv.example

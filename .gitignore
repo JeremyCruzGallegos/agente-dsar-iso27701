@@ -19,3 +19,5 @@ Thumbs.db
 
 # Configuración de VS Code local
 .vscode/
+
+ai_engine/data/

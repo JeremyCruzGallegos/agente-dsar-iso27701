@@ -1,0 +1,22 @@
+CONTRATO DE PRESTACIÓN DE SERVICIOS Nº 2024-0187
+
+Entre la empresa TecnoServ Perú S.A.C. (en adelante, "la Empresa") y el señor Juan Pérez Quispe, identificado con DNI 72839102, con domicilio en Av. Ejército 123, Cono Norte, Arequipa (en adelante, "el Cliente").
+
+CLÁUSULA 1. OBJETO
+La Empresa prestará al Cliente el servicio de internet de fibra óptica de 200 Mbps en el domicilio indicado.
+
+CLÁUSULA 2. DATOS DE CONTACTO
+Correo electrónico del Cliente: juan.perez@email.com
+Teléfono celular: 987654321
+Teléfono alterno: 054-221133
+
+CLÁUSULA 3. FACTURACIÓN
+La facturación mensual será de S/ 129.90 y se enviará al correo electrónico registrado. El pago se realizará mediante la cuenta bancaria terminada en 4521.
+
+CLÁUSULA 4. VIGENCIA
+El contrato tiene una vigencia de 24 meses a partir del 15 de enero de 2024.
+
+CLÁUSULA 5. TRATAMIENTO DE DATOS PERSONALES
+El Cliente autoriza a la Empresa a tratar sus datos personales para la ejecución del contrato, la facturación y la atención de soporte técnico.
+
+Firmado en Arequipa, el 15 de enero de 2024.

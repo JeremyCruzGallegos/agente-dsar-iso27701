@@ -1,0 +1,20 @@
+TICKET DE SOPORTE Nº 5530
+Fecha de apertura: 03/03/2024
+Canal: correo electrónico
+Estado: cerrado
+
+DATOS DE LA CLIENTE
+Nombre: María Torres Valdivia
+DNI: 45123987
+Correo actual: maria.torres@correo.com
+Teléfono de referencia: 912345678
+Dirección: Calle Mercaderes 456, Cercado, Arequipa
+
+DESCRIPCIÓN DEL CASO
+La clienta indica que no puede ingresar a su cuenta en línea y solicita cambiar su correo electrónico anterior (mtorres_old@correo.com) por el nuevo. Menciona que su hermano, Carlos Torres Valdivia (DNI 41987654, teléfono 998877665), también utiliza la cuenta y debe seguir teniendo acceso al servicio.
+
+ACCIONES REALIZADAS
+El agente de soporte verificó la identidad de la clienta mediante su DNI y actualizó el correo electrónico en el sistema. Se envió un enlace para restablecer la contraseña.
+
+OBSERVACIONES
+La clienta solicita que no se le llame por teléfono, solo contacto por correo.

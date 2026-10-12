@@ -94,7 +94,7 @@ Prepara `.env` con el paso 2. Luego:
 docker compose up --build -d
 ```
 
-Abre Flask en el puerto 5000 y n8n en el 5678. La configuración de credenciales/importación del paso 4 sigue siendo necesaria. El Compose conserva las bases en volúmenes separados, limita los puertos al host y desactiva el guardado de datos de ejecuciones de n8n. No usa la BD SQLite local previa: si necesitas reutilizarla, respáldala y configura un montaje explícito.
+Abre Flask en el puerto 5000 y n8n en el 5678. La configuración de credenciales/importación del paso 4 sigue siendo necesaria. El backend utiliza Gunicorn en modo producción. El Compose conserva las bases en volúmenes separados, limita los puertos al host y desactiva el guardado de datos de ejecuciones de n8n. No usa la BD SQLite local previa: si necesitas reutilizarla, respáldala y configura un montaje explícito.
 
 La imagen de Flask instala el backend, PDF y FAISS/SentenceTransformers con PyTorch de CPU. Prepara modelo e índice en el host con el paso 3 antes de usar la búsqueda en Docker. Los montajes de modelo/índice son de sólo lectura y la ruta interna del modelo ya está configurada. La identidad del modelo se comprueba por contenido para admitir copiarlo a otro directorio. Índices de versiones anteriores deben reconstruirse con `prepare_ai.py`. La construcción inicial descarga dependencias de IA y puede demorar.
 
@@ -141,6 +141,8 @@ python -m compileall -q app.py backend ai_engine scripts
 ```
 
 La prueba DOM inicia un Flask aislado en el puerto 5137, usa datos de demostración y no modifica tu base local. El motor se prueba con FAISS real y un encoder determinista; adicionalmente se verificó el modelo multilingüe real. Consulta `docs/ESTADO.md` para el alcance de las verificaciones.
+
+GitHub Actions ejecuta esta batería en Windows y Ubuntu. Un trabajo adicional construye la imagen y arranca Compose con una configuración generada para CI. `scripts/check_docker.py` registra un ticket ficticio y comprueba autenticación, reintento, PDF y salud de los servicios en esa instalación aislada. No lo ejecutes contra una base de trabajo: es una prueba de despliegue que escribe datos, a diferencia de `scripts/diagnose.py`.
 
 
 Para verificar el circuito con una instalación de n8n real, con una base temporal independiente:

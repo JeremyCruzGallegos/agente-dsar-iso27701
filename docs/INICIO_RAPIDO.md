@@ -1,5 +1,7 @@
 # Poner en marcha el agente DSAR
 
+Instalación por sistema: [Windows](CONFIGURAR_WINDOWS.md) · [Linux](CONFIGURAR_LINUX.md).
+
 ## 1. Abrir el proyecto
 
 Usa Python 3.11 o superior. Desde la carpeta del proyecto:
@@ -59,7 +61,7 @@ Las peticiones HTTP nunca descargan modelos ni crean índices. Si cambias docume
 
 ## 4. Conectar n8n
 
-1. Inicia n8n con `npx n8n` o con el servicio Docker descrito abajo. Abre http://127.0.0.1:5678 y configura su cuenta local.
+1. Con Node.js 24 LTS, inicia n8n con `npx --yes n8n@2.42.7` (`npx.cmd --yes n8n@2.42.7` en PowerShell) o con el servicio Docker descrito abajo. Abre http://127.0.0.1:5678 y configura su cuenta local.
 2. Importa `n8n_workflows/dsar-request.json` con **Import from File**.
 3. Crea una credencial **Header Auth** llamada **DSAR Webhook**:
    - Name: `X-Webhook-Token`.

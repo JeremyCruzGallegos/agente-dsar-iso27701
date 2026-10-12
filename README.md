@@ -14,7 +14,7 @@ python app.py
 
 Abre http://127.0.0.1:5000 y el panel http://127.0.0.1:5000/dpo. La clave del panel está en `DPO_API_KEY` de `backend/.env`, generado automáticamente. El registro funciona inicialmente sin n8n. Los archivos frontend se sirven desde su directorio real, también en Windows y en descargas ZIP.
 
-**[Configuración paso a paso en Windows](docs/CONFIGURAR_WINDOWS.md)** · **[Instrucciones completas, n8n, Docker y solución de conexión](docs/INICIO_RAPIDO.md)** · **[Estado y validaciones](docs/ESTADO.md)**
+**[Configuración en Windows](docs/CONFIGURAR_WINDOWS.md)** · **[Configuración en Linux](docs/CONFIGURAR_LINUX.md)** · **[Instrucciones completas, n8n, Docker y solución de conexión](docs/INICIO_RAPIDO.md)** · **[Estado y validaciones](docs/ESTADO.md)**
 
 ## Funciones disponibles
 

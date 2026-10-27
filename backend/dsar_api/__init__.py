@@ -56,6 +56,11 @@ def create_app(config_name: str | None = None) -> Flask:
         return response
 
     @app.get('/')
+    @app.get('/agente')
+    def agent_panel():
+        return app.send_static_file('agent.html')
+
+    @app.get('/solicitudes')
     def portal():
         return app.send_static_file('index.html')
 

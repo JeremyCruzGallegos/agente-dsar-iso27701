@@ -80,7 +80,7 @@ def _get_model():
 
 
 def _leer_archivo(ruta):
-    if ruta.endswith('.pdf'):
+    if ruta.lower().endswith('.pdf'):
         from pypdf import PdfReader
         return "\n".join(p.extract_text() or "" for p in PdfReader(ruta).pages)
     with open(ruta, encoding='utf-8') as f:
@@ -94,8 +94,33 @@ def _dividir(texto, tam=500, solape=50):
 
 def _texto_para_vector(chunk):
     """Agrega el nombre del documento al texto para que cada trozo 'sepa' de quién es."""
-    nombre = chunk['fuente'].replace('_', ' ').replace('.txt', '').replace('.pdf', '')
-    return nombre + ': ' + chunk['texto']
+    nombre = Path(chunk['fuente']).stem.replace('_', ' ')
+    seccion = chunk.get('seccion')
+    contexto = nombre + (f' — {seccion}' if seccion else '')
+    return contexto + ': ' + chunk['texto']
+
+
+def _fragmentar_documento(texto, fuente):
+    """Conserva los encabezados Markdown como contexto de cada fragmento."""
+    if not fuente.lower().endswith('.md'):
+        return [{'texto': parte, 'fuente': fuente} for parte in _dividir(texto)]
+    chunks, encabezado, bloque = [], 'Documento', []
+
+    def agregar():
+        contenido = '\n'.join(bloque).strip()
+        for parte in _dividir(contenido):
+            chunks.append({'texto': parte, 'fuente': fuente, 'seccion': encabezado})
+
+    for linea in texto.splitlines():
+        match = re.match(r'^#{1,6}\s+(.+?)\s*$', linea)
+        if match:
+            agregar()
+            bloque.clear()
+            encabezado = match.group(1).strip()
+        else:
+            bloque.append(linea)
+    agregar()
+    return chunks
 
 
 def construir_indice():
@@ -108,12 +133,14 @@ def _construir_indice():
     global _index, _chunks
     _dependencias()
     chunks = []
-    for nombre in sorted(os.listdir(DOCS_DIR)):
-        if nombre.endswith(('.pdf', '.txt')):
-            for c in _dividir(_leer_archivo(os.path.join(DOCS_DIR, nombre))):
-                chunks.append({'texto': c, 'fuente': nombre})
+    for raiz, _, nombres in os.walk(DOCS_DIR):
+        for nombre in sorted(nombres):
+            if nombre.lower().endswith(('.pdf', '.txt', '.md')):
+                ruta = os.path.join(raiz, nombre)
+                fuente = Path(ruta).relative_to(DOCS_DIR).as_posix()
+                chunks.extend(_fragmentar_documento(_leer_archivo(ruta), fuente))
     if not chunks:
-        raise ValueError('No hay documentos .txt/.pdf en ' + DOCS_DIR)
+        raise ValueError('No hay documentos .md, .txt o .pdf en ' + DOCS_DIR)
 
     vectores = _get_model().encode(
         [_texto_para_vector(c) for c in chunks],
@@ -149,7 +176,8 @@ def _asegurar_indice():
             if not isinstance(chunks, list) or not chunks or index.ntotal != len(chunks):
                 raise ValueError('Índice y metadatos incompatibles.')
             if any(not isinstance(c, dict) or not isinstance(c.get('texto'), str)
-                   or not isinstance(c.get('fuente'), str) for c in chunks):
+                   or not isinstance(c.get('fuente'), str)
+                   or ('seccion' in c and not isinstance(c['seccion'], str)) for c in chunks):
                 raise ValueError('Metadatos inválidos.')
             if index.d != _dimension() or index.metric_type != faiss.METRIC_INNER_PRODUCT:
                 raise ValueError('Dimensión o métrica incompatible.')
@@ -197,7 +225,7 @@ def buscar_pii_vectorial(query_text, k=5, *, user_id=None):
         scores, ids = _index.search(vector, _index.ntotal if sources is not None else min(k, _index.ntotal))
         return [
             {'texto': _chunks[i]['texto'], 'fuente': _chunks[i]['fuente'],
-             'score': float(s)}
+             'seccion': _chunks[i].get('seccion'), 'score': float(s)}
             for s, i in zip(scores[0], ids[0]) if 0 <= i < len(_chunks) and np.isfinite(s)
             and (sources is None or _chunks[i]['fuente'] in sources)
         ][:k]
@@ -210,7 +238,8 @@ def buscar_exacta(termino):
         _asegurar_indice()
         patron = re.compile(r'(?<!\w)' + re.escape(termino) + r'(?!\w)', re.IGNORECASE)
         return [
-            {'texto': c['texto'], 'fuente': c['fuente'], 'score': 1.0}
+            {'texto': c['texto'], 'fuente': c['fuente'],
+             'seccion': c.get('seccion'), 'score': 1.0}
             for c in _chunks if patron.search(c['texto'])
         ]
 

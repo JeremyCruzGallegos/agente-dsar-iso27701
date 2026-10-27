@@ -34,6 +34,11 @@ class ValidationTests(unittest.TestCase):
     def test_chunking_preserves_overlap(self):
         self.assertEqual(engine._dividir('abcdefghij', tam=6, solape=2), ['abcdef', 'efghij', 'ij'])
 
+    def test_markdown_chunking_preserves_sections(self):
+        chunks = engine._fragmentar_documento('# Acceso\nDerecho de acceso.\n## Plazo\nDiez días.', 'norma.md')
+        self.assertEqual([item['seccion'] for item in chunks], ['Acceso', 'Plazo'])
+        self.assertEqual(chunks[0]['fuente'], 'norma.md')
+
     def test_exact_search_uses_complete_terms(self):
         chunks = [{'texto': 'DNI 12345 y 9123456', 'fuente': 'demo.txt'}]
         with patch.object(engine, '_asegurar_indice'), patch.object(engine, '_chunks', chunks):
@@ -68,14 +73,15 @@ class IntegrationTests(unittest.TestCase):
             docs.mkdir()
             (docs / 'acceso.txt').write_text('acceso a datos', encoding='utf-8')
             (docs / 'borrado.txt').write_text('borrar cuenta', encoding='utf-8')
+            (docs / 'norma.md').write_text('# Alcance\nacceso institucional', encoding='utf-8')
             with patch.multiple(engine, DOCS_DIR=str(docs), DATA_DIR=directory,
                                 INDEX_PATH=str(root / 'index'), META_PATH=str(root / 'metadata.json'),
                                 _model=Encoder(), _index=None, _chunks=[]):
-                self.assertEqual(engine.construir_indice(), 2)
+                self.assertEqual(engine.construir_indice(), 3)
                 engine._index = None
                 results = engine.buscar_pii_vectorial('acceso', 5)
-                self.assertEqual(len(results), 2)
-                self.assertEqual(results[0]['fuente'], 'acceso.txt')
+                self.assertEqual(len(results), 3)
+                self.assertIn(results[0]['fuente'], ('acceso.txt', 'norma.md'))
                 self.assertEqual(results[0]['score'], 1.0)
                 json.dumps(results, allow_nan=False)
                 engine._index = None

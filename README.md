@@ -1,6 +1,8 @@
-# Agente DSAR — proyecto académico ISO/IEC 27701
+# Agente normativo y de derechos — proyecto académico ISO/IEC 27001/27701
 
-Portal para registrar solicitudes de derechos del titular, panel DPO y API Flask con SQLite, auditoría, retención configurable y búsqueda semántica local con FAISS/SentenceTransformers.
+Agente académico para analizar casos con normativa y documentación institucional local. Incluye recuperación semántica trazable, consola de casos, una skill de análisis y, como módulo complementario, gestión de solicitudes de derechos del titular (DSAR).
+
+ISO/IEC 27001 es una norma de sistemas de gestión de seguridad de la información, no una ley. ISO/IEC 27701 amplía ese enfoque hacia la gestión de información de privacidad. Las leyes, estatutos y reglamentos aplicables deben incorporarse como fuentes independientes.
 
 ## Arranque rápido
 
@@ -14,6 +16,8 @@ En Windows usa `py -3.12 iniciar.py --demo`. El comando prepara el entorno, las 
 
 **[Uso sencillo con IA: iniciar y revisar una solicitud](docs/USO_SENCILLO_IA.md)**
 
+Después de iniciar, abre `http://127.0.0.1:5000/agente` para analizar un caso con las fuentes locales.
+
 **[Configuración en Windows](docs/CONFIGURAR_WINDOWS.md)** · **[Configuración en Linux](docs/CONFIGURAR_LINUX.md)** · **[Instrucciones completas, n8n, Docker y solución de conexión](docs/INICIO_RAPIDO.md)** · **[Estado y validaciones](docs/ESTADO.md)**
 
 ## Funciones disponibles
@@ -22,7 +26,10 @@ En Windows usa `py -3.12 iniciar.py --demo`. El comando prepara el entorno, las 
 - DPO autenticado con lista/paginación/filtros, cambios de estado y auditoría.
 - Acceso, portabilidad JSON, rectificación y anonimización de registros SQL sujeta a retención.
 - Constancias PDF sin reproducir datos personales ni detalles libres del expediente.
-- Panel guiado por solicitud, datos legibles y búsqueda de documentos con IA local, filtro por ID, tarjetas de resultados y paso a ocultación asistida de PII.
+- Consola de análisis de casos con evidencia numerada, fuente, sección Markdown y aviso cuando la documentación no basta.
+- Ingesta recursiva de `.md`, `.txt` y PDF con texto seleccionable.
+- Skill `skills/analizar-caso-normativo` para exigir análisis fundamentado y evitar conclusiones inventadas.
+- Panel DSAR guiado por solicitud, datos legibles, búsqueda documental y ocultación asistida de PII.
 - Flujo n8n importable y autenticado para registrar solicitudes. La conexión pasa por Flask para mantener las credenciales de servicios fuera del navegador.
 - Scripts de configuración, preparación de IA, diagnóstico y pruebas en GitHub Actions.
 
@@ -58,6 +65,7 @@ compose.yaml      Backend y n8n con volúmenes persistentes
 | PATCH `/api/rectify-user` | Servicio / DPO | Cambios de nombre/correo |
 | POST `/api/delete-user` | Servicio / DPO | Anonimización con control de retención |
 | POST `/api/vector-search` | Servicio / DPO | `{"query":"texto","k":5}`; índice/modelo deben estar preparados |
+| POST `/api/case-analysis` | Servicio / DPO | `{"case":"hechos y pregunta"}`; análisis extractivo con evidencia |
 | GET `/api/ai/status` | DPO | Comprueba modelo/índice reales; muestra disponibilidad y recuentos |
 | POST `/api/redact` | Servicio / DPO | `{"text":"texto","values":["nombre"]}`; revisión obligatoria |
 | GET `/api/audit-log` | DPO | Bitácora con filtros y paginación |

@@ -25,7 +25,19 @@ py -3.12 iniciar.py --demo
 
 Este flujo local permite usar el portal y la IA antes de configurar n8n. Si ya tienes configurado el modo n8n, conserva esa configuración y mantén n8n encendido. Las instrucciones de n8n están en las guías de [Linux](CONFIGURAR_LINUX.md) y [Windows](CONFIGURAR_WINDOWS.md).
 
-## Atender una solicitud
+## Analizar casos con documentos de la UNSA
+
+1. Coloca las fuentes en `ai_engine/documentos`. Se admiten `.md`, `.txt` y PDF con texto seleccionable, también dentro de subcarpetas.
+2. Para Markdown, usa encabezados claros (`#`, `##`, `###`): el agente conserva el encabezado como sección de la cita.
+3. Detén el servidor y ejecuta `py -3.12 iniciar.py --solo-preparar` en Windows o `python3 iniciar.py --solo-preparar` en Linux.
+4. Inicia normalmente y abre `http://127.0.0.1:5000/agente`.
+5. Introduce los hechos y una pregunta concreta. El resultado presenta una respuesta preliminar y los fragmentos que la sustentan.
+
+La consola actual realiza recuperación semántica y una respuesta extractiva trazable; no contiene un modelo generativo. Esto evita presentar texto inventado como si proviniera de una norma. Una futura integración con un LLM debe conservar las citas y la regla de responder “evidencia insuficiente”.
+
+No mezcles versiones derogadas y vigentes sin identificarlas. Incluye título, entidad emisora, fecha, estado de vigencia y jerarquía cuando estén disponibles. Usa datos ficticios o anonimizados para los casos académicos.
+
+## Atender una solicitud DSAR
 
 1. Abre el portal del titular en http://127.0.0.1:5000 y registra una solicitud de prueba con ID `72839102`, correo `juan@example.com` y derecho Acceso.
 2. En el panel DPO, abre Solicitudes y pulsa Revisar. Se carga el documento, los datos registrados y una orientación según el derecho solicitado.
@@ -38,7 +50,7 @@ La similitud no es una probabilidad de certeza. El filtro encuentra documentos p
 
 ## Usar tus propios documentos
 
-Guarda archivos `.txt` en UTF-8 o PDF con texto seleccionable en `ai_engine/documentos`. Los PDF escaneados requieren obtener su texto antes; el proyecto no incluye OCR. Para que una solicitud encuentre sus documentos con el filtro activado, éstos deben mencionar su documento/ID completo. Guarda sólo información que corresponda procesar en este proyecto.
+Guarda archivos `.md` o `.txt` en UTF-8, o PDF con texto seleccionable, en `ai_engine/documentos`. Los PDF escaneados requieren obtener su texto antes; el proyecto no incluye OCR. Para que una solicitud encuentre sus documentos con el filtro activado, éstos deben mencionar su documento/ID completo. Guarda sólo información que corresponda procesar en este proyecto.
 
 Detén Flask y vuelve a ejecutar `python3 iniciar.py` para actualizar el índice. El modelo ya descargado se reutiliza. Una ruta de modelo local existente configurada en `EMBEDDING_MODEL` se conserva. También puedes comprobar la IA sin arrancar el portal:
 

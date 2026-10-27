@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agente normativo UNSA</title><link rel="stylesheet" href="/static/styles.css">
+</head>
+<body><div class="container wide">
+<header><p class="eyebrow">Proyecto de auditoría</p><h1>Agente normativo y de derechos</h1><p>Analiza casos con los estatutos, normas y documentos institucionales indexados.</p><a href="/solicitudes">Registrar solicitud DSAR</a> · <a href="/dpo">Gestionar solicitudes</a></header>
+<section class="card session-card"><form id="loginForm"><label for="apiKey">Clave del responsable</label><input id="apiKey" type="password" required autocomplete="off"><button>Conectar</button></form><button type="button" id="logoutButton" class="hidden">Cerrar sesión</button><p id="status" role="status"></p></section>
+<main id="workspace" class="hidden">
+<section class="card"><h2>Consultar un caso</h2><p class="help">Incluye hechos relevantes y la pregunta concreta. La respuesta mostrará únicamente evidencia recuperada de la base local.</p><form id="caseForm"><label for="caseText">Caso o pregunta</label><textarea id="caseText" rows="7" maxlength="4000" required placeholder="Ejemplo: Un estudiante solicita acceso a sus datos académicos. ¿Qué disposiciones y controles son aplicables?"></textarea><button id="analyzeButton">Analizar con fuentes</button></form></section>
+<section id="answerCard" class="card hidden"><h2>Respuesta fundamentada</h2><p id="answer"></p><p id="notice" class="guide-box"></p><h3>Evidencia documental</h3><div id="evidence"></div></section>
+</main></div><script src="/static/agent.js"></script></body></html>

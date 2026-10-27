@@ -91,7 +91,7 @@ def main():
         if args.solo_preparar:
             return 0
         url = f'http://127.0.0.1:{args.port}'
-        print(f'Portal del titular: {url}\nPanel DPO: {url}/dpo', flush=True)
+        print(f'Agente normativo: {url}\nPortal del titular: {url}/solicitudes\nPanel DPO: {url}/dpo', flush=True)
         # La clave sólo se muestra en una terminal interactiva local, nunca en
         # logs de CI, enlaces, historial del navegador o archivos frontend.
         if sys.stdout.isatty():
@@ -111,7 +111,7 @@ def main():
                     with opener.open(url + '/api/health', timeout=1) as response:
                         if response.status == 200:
                             if not args.no_browser:
-                                webbrowser.open(url + '/dpo')
+                                webbrowser.open(url)
                             break
                 except (URLError, OSError):
                     time.sleep(0.5)

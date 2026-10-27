@@ -1,0 +1,4 @@
+interface:
+  display_name: "Analizar caso normativo"
+  short_description: "Analiza casos con fuentes institucionales indexadas"
+  default_prompt: "Analiza este caso con evidencia documental, cita las fuentes y señala cualquier vacío de información."

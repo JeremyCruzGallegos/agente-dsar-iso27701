@@ -1,6 +1,6 @@
 # Agente normativo y de derechos — proyecto académico ISO/IEC 27001/27701
 
-Agente académico para analizar casos con normativa y documentación institucional local. Incluye recuperación semántica trazable, consola de casos, una skill de análisis y, como módulo complementario, gestión de solicitudes de derechos del titular (DSAR).
+Agente académico para analizar casos con normativa y documentación institucional local. Combina recuperación semántica con FAISS y conclusiones generadas localmente por Ollama, con citas validadas, historial conversacional y fallback seguro. Incluye, como módulo complementario, gestión de solicitudes de derechos del titular (DSAR).
 
 ISO/IEC 27001 es una norma de sistemas de gestión de seguridad de la información, no una ley. ISO/IEC 27701 amplía ese enfoque hacia la gestión de información de privacidad. Las leyes, estatutos y reglamentos aplicables deben incorporarse como fuentes independientes.
 
@@ -18,6 +18,15 @@ En Windows usa `py -3.12 iniciar.py --demo`. El comando prepara el entorno, las 
 
 Después de iniciar, abre `http://127.0.0.1:5000/agente` para analizar un caso con las fuentes locales.
 
+Para generar conclusiones instala [Ollama](https://ollama.com/download) y prepara el modelo configurado:
+
+```powershell
+winget install --id Ollama.Ollama --exact
+ollama pull qwen2.5:1.5b
+```
+
+Sin Ollama, el agente conserva la recuperación y muestra las evidencias, pero no presenta una conclusión generada.
+
 **[Configuración en Windows](docs/CONFIGURAR_WINDOWS.md)** · **[Configuración en Linux](docs/CONFIGURAR_LINUX.md)** · **[Instrucciones completas, n8n, Docker y solución de conexión](docs/INICIO_RAPIDO.md)** · **[Estado y validaciones](docs/ESTADO.md)**
 
 ## Funciones disponibles
@@ -27,6 +36,8 @@ Después de iniciar, abre `http://127.0.0.1:5000/agente` para analizar un caso c
 - Acceso, portabilidad JSON, rectificación y anonimización de registros SQL sujeta a retención.
 - Constancias PDF sin reproducir datos personales ni detalles libres del expediente.
 - Consola de análisis de casos con evidencia numerada, fuente, sección Markdown y aviso cuando la documentación no basta.
+- Chat local con historial de ocho mensajes, respuesta fundamentada, nivel de confianza y limitaciones.
+- Citas verificadas contra los fragmentos recuperados y separación de casos ficticios frente a fuentes normativas.
 - Ingesta recursiva de `.md`, `.txt` y PDF con texto seleccionable.
 - Skill `skills/analizar-caso-normativo` para exigir análisis fundamentado y evitar conclusiones inventadas.
 - Panel DSAR guiado por solicitud, datos legibles, búsqueda documental y ocultación asistida de PII.
@@ -65,7 +76,8 @@ compose.yaml      Backend y n8n con volúmenes persistentes
 | PATCH `/api/rectify-user` | Servicio / DPO | Cambios de nombre/correo |
 | POST `/api/delete-user` | Servicio / DPO | Anonimización con control de retención |
 | POST `/api/vector-search` | Servicio / DPO | `{"query":"texto","k":5}`; índice/modelo deben estar preparados |
-| POST `/api/case-analysis` | Servicio / DPO | `{"case":"hechos y pregunta"}`; análisis extractivo con evidencia |
+| POST `/api/case-analysis` | Servicio / DPO | Caso e historial; conclusión RAG local con citas y fallback |
+| GET `/api/agent/status` | DPO | Estado y nombre del modelo generativo local de Ollama |
 | GET `/api/ai/status` | DPO | Comprueba modelo/índice reales; muestra disponibilidad y recuentos |
 | POST `/api/redact` | Servicio / DPO | `{"text":"texto","values":["nombre"]}`; revisión obligatoria |
 | GET `/api/audit-log` | DPO | Bitácora con filtros y paginación |
@@ -74,8 +86,11 @@ Las rutas privadas usan `X-API-Key`. La auditoría referencia documentos con HMA
 
 ## Modelo local
 
+El repositorio no incluye actualmente un corpus de ejemplo: se retiraron fuentes ficticias, incompletas o sin trazabilidad. Añade documentos usando [la plantilla validada](docs/PLANTILLA_FUENTE.md).
+
 ```bash
 python -m pip install -r ai_engine/requirements.txt
+python scripts/validate_documents.py
 python scripts/prepare_ai.py
 ```
 

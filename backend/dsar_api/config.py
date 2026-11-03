@@ -28,6 +28,10 @@ class BaseConfig:
     N8N_WEBHOOK_URL = "http://127.0.0.1:5678/webhook/dsar-request"
     N8N_TIMEOUT_SECONDS = 10
     N8N_WEBHOOK_TOKEN = ""
+    OLLAMA_BASE_URL = "http://127.0.0.1:11434"
+    OLLAMA_MODEL = "qwen2.5:1.5b"
+    OLLAMA_TIMEOUT_SECONDS = 120
+    LLM_CONTEXT_MAX_CHARS = 12000
 
 
 class DevelopmentConfig(BaseConfig):
@@ -42,6 +46,7 @@ class TestingConfig(BaseConfig):
     SERVICE_API_KEY = "test-service-key"
     DPO_API_KEY = "test-dpo-key"
     AUDIT_HASH_KEY = "test-audit-key"
+    OLLAMA_MODEL = ""
 
 
 class ProductionConfig(BaseConfig):
@@ -81,12 +86,14 @@ def environment_overrides():
     values = {name: os.environ[name] for name in (
         "DATABASE_URL", "SERVICE_API_KEY", "DPO_API_KEY", "AUDIT_HASH_KEY",
         "DSAR_INTAKE_MODE", "N8N_WEBHOOK_URL", "N8N_WEBHOOK_TOKEN",
+        "OLLAMA_BASE_URL", "OLLAMA_MODEL",
     ) if name in os.environ}
     if "DATABASE_URL" in values:
         values["SQLALCHEMY_DATABASE_URI"] = values.pop("DATABASE_URL")
     if "CORS_ORIGINS" in os.environ:
         values["CORS_ORIGINS"] = _csv(os.environ["CORS_ORIGINS"])
-    for name in ("DSAR_SLA_DAYS", "N8N_TIMEOUT_SECONDS"):
+    for name in ("DSAR_SLA_DAYS", "N8N_TIMEOUT_SECONDS", "OLLAMA_TIMEOUT_SECONDS",
+                 "LLM_CONTEXT_MAX_CHARS"):
         if name in os.environ:
             values[name] = int(os.environ[name])
     return values

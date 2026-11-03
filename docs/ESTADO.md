@@ -1,5 +1,15 @@
 # Estado de la continuación
 
+## Actualización: chat RAG generativo local
+
+- Ollama genera conclusiones locales mediante `/api/chat`; el backend extrae y valida sus citas.
+- La skill `analizar-caso-normativo` forma parte del prompt del backend.
+- Las citas se validan contra los fragmentos FAISS; una cita inexistente activa el fallback extractivo.
+- Los casos ficticios se etiquetan y se excluyen del prompt cuando existen fuentes normativas.
+- La interfaz conserva hasta ocho mensajes, admite seguimiento y limpia el historial al cerrar sesión.
+- `GET /api/agent/status` informa si el modelo configurado está preparado.
+- Modelo predeterminado: `qwen2.5:1.5b`, configurable mediante `backend/.env`; `qwen2.5:3b` requiere más memoria.
+
 Fecha: 12 de octubre de 2026.
 Base utilizada: rama `feat/flask-faiss-n8n`, commit `1fe5693`, que contenía avances posteriores a `main` (`67a496c`). Rama de trabajo: `feat/flask-faiss-n8n`.
 

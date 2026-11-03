@@ -34,6 +34,7 @@ def main():
         print(result.output.strip())
     print('Configuración lista. Ejecuta: python app.py')
     print('Abre http://127.0.0.1:5000 y /dpo. La clave DPO está en backend/.env.')
+    print('Para conclusiones locales instala Ollama y ejecuta: ollama pull qwen2.5:1.5b')
 
 
 if __name__ == '__main__':

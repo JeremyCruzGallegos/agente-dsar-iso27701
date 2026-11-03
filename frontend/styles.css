@@ -156,4 +156,13 @@ input, select, textarea { margin-bottom: 8px; }
 .search-result button { width: auto; font-size: 14px; }
 details { margin-top: 20px; }
 summary { cursor: pointer; font-weight: bold; color: var(--primary); }
+.conversation { display: grid; gap: 14px; margin: 18px 0; }
+.chat-message { padding: 16px; border-radius: 10px; max-width: 88%; }
+.chat-message.user { justify-self: end; background: var(--primary); color: white; }
+.chat-message.assistant { justify-self: start; background: #eef3f7; border: 1px solid #d5e2e9; }
+.chat-message h3 { margin: 0 0 8px; }
+.chat-message.user h3 { color: white; }
+.chat-text { white-space: pre-wrap; line-height: 1.65; overflow-wrap: anywhere; }
+.chat-message .search-result { background: white; }
+.chat-message h4 { color: var(--primary); overflow-wrap: anywhere; }
 @media (max-width: 600px) { .data-summary { grid-template-columns: 1fr; } .panel-tabs button { min-width: 100%; } }

@@ -29,6 +29,10 @@ def create_app(config_name: str | None = None) -> Flask:
         raise RuntimeError("DSAR_INTAKE_MODE debe ser direct o n8n.")
     if not 1 <= app.config["N8N_TIMEOUT_SECONDS"] <= 30:
         raise RuntimeError("N8N_TIMEOUT_SECONDS debe estar entre 1 y 30.")
+    if not 5 <= app.config["OLLAMA_TIMEOUT_SECONDS"] <= 600:
+        raise RuntimeError("OLLAMA_TIMEOUT_SECONDS debe estar entre 5 y 600.")
+    if not 1000 <= app.config["LLM_CONTEXT_MAX_CHARS"] <= 50000:
+        raise RuntimeError("LLM_CONTEXT_MAX_CHARS debe estar entre 1000 y 50000.")
 
     # Carpeta para la BD SQLite local (ignorada por git).
     (Path(__file__).resolve().parent.parent / "instance").mkdir(exist_ok=True)

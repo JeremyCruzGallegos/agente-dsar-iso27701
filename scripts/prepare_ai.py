@@ -19,6 +19,14 @@ def main():
         return 1
     load_dotenv(env)
     try:
+        from scripts.validate_documents import validate_all
+        files, invalid = validate_all()
+        if not files:
+            print('No hay documentos Markdown. Usa docs/PLANTILLA_FUENTE.md.', file=sys.stderr)
+            return 1
+        if invalid:
+            print('Hay documentos inválidos. Ejecuta python scripts/validate_documents.py.', file=sys.stderr)
+            return 1
         from sentence_transformers import SentenceTransformer
         model_path = args.local_model.resolve() if args.local_model else ROOT / 'models_local' / 'embeddings'
         if args.local_model or (model_path / 'modules.json').exists():

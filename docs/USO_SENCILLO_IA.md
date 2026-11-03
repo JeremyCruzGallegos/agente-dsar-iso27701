@@ -27,13 +27,34 @@ Este flujo local permite usar el portal y la IA antes de configurar n8n. Si ya t
 
 ## Analizar casos con documentos de la UNSA
 
-1. Coloca las fuentes en `ai_engine/documentos`. Se admiten `.md`, `.txt` y PDF con texto seleccionable, también dentro de subcarpetas.
-2. Para Markdown, usa encabezados claros (`#`, `##`, `###`): el agente conserva el encabezado como sección de la cita.
-3. Detén el servidor y ejecuta `py -3.12 iniciar.py --solo-preparar` en Windows o `python3 iniciar.py --solo-preparar` en Linux.
-4. Inicia normalmente y abre `http://127.0.0.1:5000/agente`.
-5. Introduce los hechos y una pregunta concreta. El resultado presenta una respuesta preliminar y los fragmentos que la sustentan.
+### Preparar el modelo que redacta conclusiones
 
-La consola actual realiza recuperación semántica y una respuesta extractiva trazable; no contiene un modelo generativo. Esto evita presentar texto inventado como si proviniera de una norma. Una futura integración con un LLM debe conservar las citas y la regla de responder “evidencia insuficiente”.
+El modelo de embeddings busca fragmentos, pero no redacta respuestas. Para activar el chat generativo local en Windows:
+
+```powershell
+winget install --id Ollama.Ollama --exact
+ollama pull qwen2.5:1.5b
+```
+
+Ollama debe permanecer disponible en `http://127.0.0.1:11434`. Puedes cambiar el modelo o la dirección en `backend/.env`:
+
+```dotenv
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+OLLAMA_MODEL=qwen2.5:1.5b
+OLLAMA_TIMEOUT_SECONDS=120
+LLM_CONTEXT_MAX_CHARS=12000
+```
+
+1. Coloca fuentes `.md` UTF-8 en la categoría correspondiente dentro de `ai_engine/documentos`.
+2. Parte de [PLANTILLA_FUENTE.md](PLANTILLA_FUENTE.md) y completa todos sus metadatos. Para Markdown, usa encabezados claros (`#`, `##`, `###`): el agente conserva el encabezado como sección de la cita.
+3. Valida antes de indexar: `python scripts/validate_documents.py`. Una fuente oficial incompleta, sin URL o en una categoría incorrecta será rechazada.
+4. Detén el servidor y ejecuta `py -3.12 iniciar.py --solo-preparar` en Windows o `python3 iniciar.py --solo-preparar` en Linux.
+5. Inicia normalmente y abre `http://127.0.0.1:5000/agente`.
+6. Introduce los hechos y una pregunta concreta. El resultado presenta una respuesta preliminar y los fragmentos que la sustentan.
+
+La consola expande conceptos jurídicos relevantes, recupera evidencia con FAISS y solicita a Ollama una conclusión en texto. El backend valida que los identificadores citados existan; si Ollama falla o inventa una cita, descarta la conclusión y conserva únicamente los fragmentos recuperados. Cuando existen fuentes normativas, los casos ficticios, formularios y resúmenes no se incluyen en el contexto usado para formular la conclusión. Las preguntas cortas reutilizan el último caso; una pregunta nueva y detallada inicia un contexto temático nuevo.
+
+La conversación mantiene como máximo ocho mensajes en el navegador y se elimina al cerrar sesión o pulsar **Nueva conversación**. Las consultas y respuestas no se guardan en la bitácora; solo se registran metadatos operativos del análisis.
 
 No mezcles versiones derogadas y vigentes sin identificarlas. Incluye título, entidad emisora, fecha, estado de vigencia y jerarquía cuando estén disponibles. Usa datos ficticios o anonimizados para los casos académicos.
 
@@ -50,7 +71,7 @@ La similitud no es una probabilidad de certeza. El filtro encuentra documentos p
 
 ## Usar tus propios documentos
 
-Guarda archivos `.md` o `.txt` en UTF-8, o PDF con texto seleccionable, en `ai_engine/documentos`. Los PDF escaneados requieren obtener su texto antes; el proyecto no incluye OCR. Para que una solicitud encuentre sus documentos con el filtro activado, éstos deben mencionar su documento/ID completo. Guarda sólo información que corresponda procesar en este proyecto.
+El corpus compartido se mantiene en Markdown UTF-8 validado dentro de `ai_engine/documentos`. Convierte previamente los PDF y verifica la transcripción contra la fuente oficial; el proyecto no incluye OCR. Para que una solicitud DSAR encuentre documentos individuales con el filtro activado, éstos deben mencionar su documento/ID completo, pero no deben subirse datos personales reales al repositorio.
 
 Detén Flask y vuelve a ejecutar `python3 iniciar.py` para actualizar el índice. El modelo ya descargado se reutiliza. Una ruta de modelo local existente configurada en `EMBEDDING_MODEL` se conserva. También puedes comprobar la IA sin arrancar el portal:
 

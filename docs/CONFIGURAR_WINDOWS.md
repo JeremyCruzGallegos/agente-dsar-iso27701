@@ -2,6 +2,17 @@
 
 Para preparar IA y abrir el panel con un comando, sigue [Uso sencillo con IA](USO_SENCILLO_IA.md). Esta guía conserva los pasos manuales y la configuración de n8n.
 
+## Activar conclusiones generativas locales
+
+Instala Ollama una vez y descarga el modelo compartido por el equipo:
+
+```powershell
+winget install --id Ollama.Ollama --exact
+ollama pull qwen2.5:1.5b
+```
+
+Comprueba que responde con `ollama list`. El modelo ocupa aproximadamente 1 GB y no se guarda en Git; cada integrante debe descargarlo localmente. En equipos con más memoria puede configurarse `qwen2.5:3b`. Sin Ollama, la aplicación conserva la búsqueda documental, pero no acepta una conclusión generativa.
+
 Estas instrucciones usan Windows 10/11 y PowerShell. El proyecto integrado se obtiene desde `main`.
 
 ## 1. Python y Node.js

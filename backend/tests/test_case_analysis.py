@@ -112,12 +112,18 @@ def test_uncited_prescriptive_claims_are_removed():
     )
     assert '1. 2.' not in cleaned
     assert 'Acciones recomendadas:' not in cleaned
+    renumbered, _ = _remove_uncited_prescriptions(
+        'ACCIONES RECOMENDADAS: 1. Revisar controles sin cita. '
+        '2. Notificar el incidente conforme al procedimiento [2]. LÍMITES: faltan hechos.'
+    )
+    assert '1. Notificar' in renumbered
+    assert '2. Notificar' not in renumbered
 
 
 def test_appends_valid_sources_when_model_omits_inline_markers(client):
     matches = [{'texto': 'Derecho de acceso.', 'fuente': 'legislacion/norma.md',
                 'seccion': 'Artículo 1', 'score': .8}]
-    generated = {'answer': 'Corresponde evaluar el derecho de acceso.', 'citations': [1],
+    generated = {'answer': 'La evidencia recuperada describe el derecho de acceso.', 'citations': [1],
                  'limitations': ['Verificar vigencia.', 'Verificar vigencia.'],
                  'confidence': 'media', 'model': 'modelo-prueba'}
     with patch(SEARCH, return_value=matches), patch(GENERATE, return_value=generated):
@@ -125,10 +131,7 @@ def test_appends_valid_sources_when_model_omits_inline_markers(client):
     data = response.json['data']
     assert data['mode'] == 'generative_rag'
     assert 'Fuentes utilizadas: [1].' in data['answer']
-    assert data['limitations'] == [
-        'Verificar vigencia.',
-        'Se omitieron recomendaciones prescriptivas que no incluían una cita directa.',
-    ]
+    assert data['limitations'] == ['Verificar vigencia.']
 
 
 def test_rejects_generated_answer_with_invented_citation(client):
@@ -151,6 +154,42 @@ def test_history_is_bounded_and_validated(client):
     too_many = [{'role': 'user', 'content': 'x'}] * 9
     response = client.post('/api/case-analysis', json={'case': 'caso', 'history': too_many}, headers=DPO)
     assert response.status_code == 422
+
+
+def test_generation_retries_once_when_model_omits_all_citations(app):
+    from dsar_api.services.case_service import _generate_with_citation_retry
+    first = {'answer': 'Conclusión sin referencias.', 'citations': [], 'limitations': [],
+             'confidence': 'media', 'model': 'modelo'}
+    second = {'answer': 'Conclusión corregida [1].', 'citations': [1], 'limitations': [],
+              'confidence': 'media', 'model': 'modelo'}
+    with app.app_context(), patch(GENERATE, side_effect=[first, second]) as generate:
+        result = _generate_with_citation_retry([{'role': 'user', 'content': 'Caso'}])
+    assert result['citations'] == [1]
+    assert generate.call_count == 2
+    assert 'Cada viñeta' in generate.call_args.args[0][-1]['content']
+
+
+def test_uncited_imperative_action_requires_retry(app):
+    from dsar_api.services.case_service import _generate_with_citation_retry
+    first = {'answer': 'ANÁLISIS: Evidencia [1]. ACCIONES: Revisar el procedimiento.',
+             'citations': [1], 'limitations': [], 'confidence': 'media', 'model': 'modelo'}
+    second = {'answer': 'ANÁLISIS: Evidencia [1]. ACCIONES: Revisar el procedimiento [1].',
+              'citations': [1], 'limitations': [], 'confidence': 'media', 'model': 'modelo'}
+    with app.app_context(), patch(GENERATE, side_effect=[first, second]) as generate:
+        result = _generate_with_citation_retry([{'role': 'user', 'content': 'Caso'}])
+    assert generate.call_count == 2
+    assert result['answer'].endswith('[1].')
+
+
+def test_prescription_is_grounded_with_matching_evidence():
+    from dsar_api.services.case_service import _ground_prescriptions
+    generated = {'answer': 'Implementar procedimientos para responder incidentes de seguridad.',
+                 'citations': [], 'limitations': [], 'confidence': 'media', 'model': 'modelo'}
+    evidence = [{'id': 4, 'section': 'Respuesta a incidentes',
+                 'excerpt': 'Procedimientos para responder a incidentes de seguridad.'}]
+    result = _ground_prescriptions(generated, evidence)
+    assert result['answer'].endswith('[4].')
+    assert result['citations'] == [4]
 
 
 def test_agent_status_is_private(client):

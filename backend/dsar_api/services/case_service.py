@@ -128,6 +128,9 @@ def _messages(case, history, evidence, *, followup=False):
     )
     response_rules = (
         'Responde únicamente con el resultado final en texto plano. ' + shape + ' '
+        'Usa exactamente estos títulos y ningún otro: ANÁLISIS, CONCLUSIÓN, ACCIONES RECOMENDADAS y LÍMITES. '
+        'ANÁLISIS debe tener como máximo 4 viñetas; CONCLUSIÓN un párrafo; ACCIONES un máximo de 5 pasos. '
+        'No crees apartados llamados Hechos, Derecho, Fuentes o Condiciones. '
         'Cada afirmación documental debe incluir citas [n] usando solo los IDs proporcionados. '
         'No inventes causales de rechazo, requisitos, plazos ni obligaciones. Si falta información, '
         'indícalo al final bajo el apartado Límites. No devuelvas JSON.'
@@ -176,21 +179,88 @@ def _remove_unsupported_rejections(answer):
     return ' '.join(kept).strip(), removed
 
 
+PRESCRIPTIVE_MARKERS = (
+    'debe ', 'deben ', 'debera ', 'tiene que ', 'corresponde ', 'es obligatorio',
+    'esta obligado', 'esta obligada', 'revisar ', 'consultar ', 'solicitar ',
+    'establecer ', 'mantener ', 'notificar ', 'verificar ', 'implementar ', 'registrar ',
+)
+
+
+def _has_uncited_prescriptions(answer):
+    for part in re.split(r'(?<=[.!?])\s+', answer):
+        if (any(marker in _plain(part) for marker in PRESCRIPTIVE_MARKERS)
+                and not re.search(r'\[\d+\]', part)):
+            return True
+    return False
+
+
+def _claim_terms(value):
+    ignored = {'para', 'como', 'esta', 'este', 'debe', 'deben', 'revisar', 'consultar',
+               'solicitar', 'universidad', 'datos', 'personales', 'segun', 'fuente'}
+    return {word for word in re.findall(r'[a-z0-9]{4,}', _plain(value)) if word not in ignored}
+
+
+def _ground_prescriptions(generated, evidence):
+    """Atribuye una recomendación solo si coincide con una evidencia concreta."""
+    if not evidence:
+        return generated
+    evidence_terms = [(item['id'], _claim_terms(
+        ' '.join(filter(None, (item.get('section'), item.get('excerpt')))))) for item in evidence]
+    parts = re.split(r'(?<=[.!?])\s+', generated['answer'])
+    grounded = []
+    for part in parts:
+        plain_part = _plain(part)
+        if (any(marker in plain_part for marker in PRESCRIPTIVE_MARKERS)
+                and not re.search(r'\[\d+\]', part)):
+            terms = _claim_terms(part)
+            ranked = sorted(((len(terms & words), item_id) for item_id, words in evidence_terms),
+                            reverse=True)
+            if ranked and ranked[0][0] >= 2:
+                marker = f' [{ranked[0][1]}]'
+                part = re.sub(r'([.!?])$', marker + r'\1', part) if re.search(r'[.!?]$', part) else part + marker
+        grounded.append(part)
+    answer = ' '.join(grounded)
+    inline = [int(value) for value in re.findall(r'\[(\d+)\]', answer)]
+    citations = list(dict.fromkeys([*generated.get('citations', []), *inline]))
+    return {**generated, 'answer': answer, 'citations': citations}
+
+
 def _remove_uncited_prescriptions(answer):
     """Evita presentar como obligación una frase que no cite evidencia en línea."""
-    markers = ('debe ', 'deben ', 'debera ', 'tiene que ', 'corresponde ',
-               'es obligatorio', 'esta obligado', 'esta obligada')
     parts = re.split(r'(?<=[.!?])\s+', answer)
     kept, removed = [], False
     for part in parts:
         plain = _plain(part)
-        if any(marker in plain for marker in markers) and not re.search(r'\[\d+\]', part):
+        if any(marker in plain for marker in PRESCRIPTIVE_MARKERS) and not re.search(r'\[\d+\]', part):
             removed = True
         else:
             kept.append(part)
     cleaned = ' '.join(kept).strip()
     cleaned = re.sub(r'Acciones recomendadas:\s*(?:\d+\.\s*)*(?=Límites:)', '', cleaned)
+    while re.search(r'\b\d+\.\s+(?=\d+\.\s+)', cleaned):
+        cleaned = re.sub(r'\b\d+\.\s+(?=\d+\.\s+)', '', cleaned)
+    cleaned = re.sub(r'(acciones recomendadas:\s*)\d+\.', r'\g<1>1.', cleaned,
+                     flags=re.IGNORECASE)
     return cleaned, removed
+
+
+def _generate_with_citation_retry(messages, evidence=None):
+    generated = _ground_prescriptions(llm_service.generate(messages), evidence or [])
+    if generated['citations'] and not _has_uncited_prescriptions(generated['answer']):
+        return generated
+    correction = (
+        'Reescribe tu respuesta anterior conservando únicamente afirmaciones sustentadas. '
+        'Cada viñeta de ANÁLISIS, cada oración de CONCLUSIÓN y cada paso de ACCIONES RECOMENDADAS '
+        'debe terminar con una o más citas [n] tomadas de la EVIDENCIA RECUPERADA. '
+        'No uses una lista general de fuentes al final como sustituto de citas en línea. '
+        'Mantén el formato breve solicitado y no agregues información nueva.'
+    )
+    retry_messages = [*messages, {'role': 'assistant', 'content': generated['answer']},
+                      {'role': 'user', 'content': correction}]
+    retried = _ground_prescriptions(llm_service.generate(retry_messages), evidence or [])
+    if not retried['citations']:
+        raise llm_service.LLMInvalid('El modelo no produjo una respuesta con citas en línea.')
+    return retried
 
 
 def analyze(payload):
@@ -202,7 +272,7 @@ def analyze(payload):
     history = _history(payload.get('history'))
     try:
         retrieval_query, followup = _retrieval_query(case, history)
-        evidence = _evidence(buscar_pii_vectorial(retrieval_query, 12))
+        evidence = _evidence(buscar_pii_vectorial(retrieval_query, 8))
     except SearchUnavailable as exc:
         raise ApiError(str(exc), code='case_analysis_unavailable', status_code=503) from exc
     except Exception as exc:
@@ -212,8 +282,8 @@ def analyze(payload):
         generated = _fallback([], 'No existe evidencia recuperada para fundamentar una conclusión.')
     else:
         try:
-            generated = llm_service.generate(_messages(
-                case, history if followup else [], evidence, followup=followup))
+            generated = _generate_with_citation_retry(_messages(
+                case, history if followup else [], evidence, followup=followup), evidence)
             generated['answer'], removed = _remove_unsupported_rejections(generated['answer'])
             if removed:
                 generated['limitations'].append(

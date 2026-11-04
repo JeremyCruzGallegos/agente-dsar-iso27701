@@ -63,7 +63,7 @@ def generate(messages: list[dict]):
         'messages': messages,
         'stream': False,
         'keep_alive': '2m',
-        'options': {'temperature': 0, 'num_predict': 650},
+        'options': {'temperature': 0, 'num_predict': 850},
     }
     result = _request('/api/chat', payload,
                       timeout=current_app.config['OLLAMA_TIMEOUT_SECONDS'])

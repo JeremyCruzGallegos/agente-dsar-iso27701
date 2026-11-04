@@ -31,7 +31,7 @@ class BaseConfig:
     OLLAMA_BASE_URL = "http://127.0.0.1:11434"
     OLLAMA_MODEL = "qwen2.5:1.5b"
     OLLAMA_TIMEOUT_SECONDS = 120
-    LLM_CONTEXT_MAX_CHARS = 12000
+    LLM_CONTEXT_MAX_CHARS = 8000
 
 
 class DevelopmentConfig(BaseConfig):

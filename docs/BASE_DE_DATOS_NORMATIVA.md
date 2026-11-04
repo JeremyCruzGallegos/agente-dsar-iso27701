@@ -95,6 +95,26 @@ Invoke-RestMethod -Uri http://127.0.0.1:5000/api/knowledge/status -Headers $head
 El agente estará listo cuando exista al menos una disposición verificada de una fuente activa.
 No es necesario reconstruir índices al agregar registros: las consultas leen el estado actual de la base.
 
+## Importar la carpeta temporal
+
+Los Markdown de `docs/temporal` son insumos de carga y nunca son consultados directamente por el agente.
+Primero simula la segmentación:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\import_normative_markdown.py
+```
+
+Si los recuentos son correctos, aplica una transacción idempotente:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\import_normative_markdown.py --apply
+```
+
+La importación reemplaza únicamente las disposiciones de las fuentes administradas por el script. Las
+transcripciones incompletas se conservan con `verified=false`, por lo que no fundamentan respuestas.
+La copia de ISO/IEC 27701 es de uso local autorizado por el equipo y está excluida de Git; cada integrante
+debe colocar su copia autorizada con el mismo nombre antes de ejecutar la importación.
+
 ## Campos sugeridos para el proyecto UNSA
 
 Empiecen por registrar, siempre desde la versión oficial aplicable:

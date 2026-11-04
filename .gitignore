@@ -23,6 +23,8 @@ Thumbs.db
 .vscode/
 # Secretos y caches
 .env
+docs/temporal/iso_iec_27701_2025_standard.md
+backend-run.*.log
 .pytest_cache/
 backend/instance/
 node_modules/

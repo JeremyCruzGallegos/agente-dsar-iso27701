@@ -35,6 +35,33 @@ def _tokens(value):
             if token not in {"para", "como", "esta", "este", "debe", "datos", "sobre"}}
 
 
+QUERY_EQUIVALENTS = {
+    "acceso": {"access", "rights"},
+    "consentimiento": {"consent"},
+    "finalidad": {"purpose"},
+    "tratamiento": {"processing"},
+    "titular": {"principal", "subject"},
+    "seguridad": {"security"},
+    "incidente": {"incident", "breach"},
+    "filtracion": {"breach", "disclosure"},
+    "retencion": {"retention"},
+    "transferencia": {"transfer"},
+    "supresion": {"deletion", "erasure"},
+    "cancelacion": {"deletion", "erasure"},
+    "rectificacion": {"correction", "accuracy"},
+    "portabilidad": {"portability"},
+    "privacidad": {"privacy"},
+}
+
+
+def _query_tokens(value):
+    tokens = _tokens(value)
+    expanded = set(tokens)
+    for token in tokens:
+        expanded.update(QUERY_EQUIVALENTS.get(token, ()))
+    return expanded
+
+
 def _score(query_tokens, provision):
     fields = (
         (provision.source.code, 4.0), (provision.source.title, 3.0),
@@ -53,7 +80,7 @@ def buscar_normativa(query_text, k=5, *, user_id=None):
     """Devuelve disposiciones verificadas y vigentes ordenadas por coincidencia."""
     del user_id  # El corpus normativo no contiene datos personales de titulares.
     query = validar_consulta(query_text, k)
-    tokens = _tokens(query)
+    tokens = _query_tokens(query)
     try:
         rows = (LegalProvision.query.join(LegalSource)
                 .filter(LegalProvision.verified.is_(True), LegalSource.status == "active")

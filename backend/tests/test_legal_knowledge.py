@@ -58,3 +58,9 @@ def test_source_code_and_provision_code_are_unique(client):
     body = {"provision_code": "Art. 1", "content": "Texto suficiente", "verified": True}
     assert client.post(f"/api/knowledge/sources/{source_id}/provisions", json=body, headers=DPO).status_code == 201
     assert client.post(f"/api/knowledge/sources/{source_id}/provisions", json=body, headers=DPO).status_code == 409
+
+
+def test_query_tokens_expand_spanish_privacy_terms_to_english():
+    from dsar_api.services.legal_search import _query_tokens
+    tokens = _query_tokens("incidente de seguridad y derecho de acceso")
+    assert {"incident", "breach", "security", "access", "rights"}.issubset(tokens)

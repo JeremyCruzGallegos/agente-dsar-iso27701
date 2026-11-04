@@ -98,6 +98,22 @@ def test_uncited_rejection_claims_are_removed():
     assert '[1]' in answer
 
 
+def test_uncited_prescriptive_claims_are_removed():
+    from dsar_api.services.case_service import _remove_uncited_prescriptions
+    answer, removed = _remove_uncited_prescriptions(
+        'El responsable debe verificar la identidad. El derecho está reconocido [1]. '
+        'La universidad debe responder según la norma [1].')
+    assert removed is True
+    assert 'debe verificar' not in answer
+    assert 'reconocido [1]' in answer
+    assert 'debe responder según la norma [1]' in answer
+    cleaned, _ = _remove_uncited_prescriptions(
+        'Acciones recomendadas: 1. Debe presentar un formato. 2. Debe adjuntar una copia. Límites: faltan datos.'
+    )
+    assert '1. 2.' not in cleaned
+    assert 'Acciones recomendadas:' not in cleaned
+
+
 def test_appends_valid_sources_when_model_omits_inline_markers(client):
     matches = [{'texto': 'Derecho de acceso.', 'fuente': 'legislacion/norma.md',
                 'seccion': 'Artículo 1', 'score': .8}]
@@ -109,7 +125,10 @@ def test_appends_valid_sources_when_model_omits_inline_markers(client):
     data = response.json['data']
     assert data['mode'] == 'generative_rag'
     assert 'Fuentes utilizadas: [1].' in data['answer']
-    assert data['limitations'] == ['Verificar vigencia.']
+    assert data['limitations'] == [
+        'Verificar vigencia.',
+        'Se omitieron recomendaciones prescriptivas que no incluían una cita directa.',
+    ]
 
 
 def test_rejects_generated_answer_with_invented_citation(client):

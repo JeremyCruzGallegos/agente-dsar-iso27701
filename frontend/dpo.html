@@ -5,7 +5,7 @@
 <title>Panel DPO — Agente DSAR</title><link rel="stylesheet" href="/static/styles.css">
 </head>
 <body><div class="container wide">
-<header><h1>Revisa solicitudes con ayuda de IA</h1><p>Encuentra datos, revisa documentos y atiende cada solicitud.</p><a href="/">Abrir agente normativo</a> · <a href="/solicitudes">Abrir portal del titular</a></header>
+<header><h1>Revisa solicitudes con ayuda de IA</h1><p>Consulta datos, normativa aplicable y atiende cada solicitud.</p><a href="/">Abrir agente normativo</a> · <a href="/solicitudes">Abrir portal del titular</a></header>
 <section class="card session-card">
 <form id="loginForm"><label for="apiKey">Clave del responsable DPO</label><p class="help">Al iniciar con iniciar.py, copia aquí la clave que muestra tu terminal.</p><input id="apiKey" type="password" required autocomplete="off"><button id="loginButton">Entrar al panel</button></form>
 <button type="button" id="logoutButton" class="hidden">Cerrar sesión</button><p id="panelStatus" role="status" aria-live="polite"></p>
@@ -18,7 +18,7 @@
 </nav>
 <section id="requestsPanel" class="panel-section">
 <section class="card">
-<h2>Solicitudes recibidas</h2><p class="help">Elige <strong>Revisar</strong> para cargar el titular y preparar la búsqueda de sus documentos.</p>
+<h2>Solicitudes recibidas</h2><p class="help">Elige <strong>Revisar</strong> para cargar el titular y consultar normativa relacionada.</p>
 <form id="filterForm" class="toolbar">
 <div><label for="statusFilter">Estado</label><select id="statusFilter"><option value="">Todos</option><option>Recibido</option><option>En verificacion</option><option>En proceso</option><option>Completado</option><option>Rechazado</option></select></div>
 <div><label for="typeFilter">Derecho</label><select id="typeFilter"><option value="">Todos</option><option>Acceso</option><option>Supresion</option><option>Rectificacion</option><option>Portabilidad</option></select></div>
@@ -28,7 +28,7 @@
 </section>
 <section id="requestDetail" class="card hidden">
 <p class="eyebrow">Solicitud seleccionada</p><h2 id="detailTitle"></h2><p id="caseSummary"></p><p id="detailText"></p><p id="caseGuide" class="guide-box"></p>
-<div class="toolbar"><button type="button" id="caseSubject">Ver datos del titular</button><button type="button" id="caseAI">Buscar documentos con IA</button></div>
+<div class="toolbar"><button type="button" id="caseSubject">Ver datos del titular</button><button type="button" id="caseAI">Consultar normativa</button></div>
 <form id="statusForm"><label for="newStatus">Siguiente estado</label><select id="newStatus" required></select><label for="resolutionNote">Nota de resolución</label><textarea id="resolutionNote" maxlength="500" placeholder="Describe lo revisado y la actuación realizada."></textarea><button id="saveStatus">Guardar estado</button></form>
 <details><summary>Historial de esta solicitud</summary><div id="auditEntries"></div></details>
 </section>
@@ -40,10 +40,10 @@
 <form id="rectifyForm" class="hidden"><h3>Corregir datos</h3><label for="subjectName">Nombre corregido</label><input id="subjectName" maxlength="200"><label for="subjectEmail">Correo corregido</label><input id="subjectEmail" type="email" maxlength="254"><button>Guardar rectificación</button></form></section>
 </section>
 <section id="aiPanel" class="panel-section hidden">
-<section class="card"><h2>Asistente de búsqueda con IA</h2><p>Describe qué necesitas encontrar. La IA ordena fragmentos de tus documentos por su significado.</p>
+<section class="card"><h2>Asistente de búsqueda normativa</h2><p>Describe el caso. El sistema recupera artículos y cláusulas verificadas de la base.</p>
 <div class="ai-health"><p id="aiStatus" role="status">Comprobando IA local…</p><button type="button" id="refreshAI">Comprobar de nuevo</button></div>
-<p id="aiCase" class="guide-box">Selecciona una solicitud para buscar documentos de su titular, o realiza una búsqueda general.</p>
-<form id="searchForm"><label for="query">¿Qué información necesitas?</label><input id="query" maxlength="4000" required placeholder="Por ejemplo: datos de contacto y solicitudes de publicidad"><div class="check-line"><input type="checkbox" id="scopeSubject" disabled><label for="scopeSubject">Buscar sólo en documentos que mencionan el ID del titular seleccionado</label></div><button id="searchButton">Buscar con IA</button></form>
+<p id="aiCase" class="guide-box">Selecciona una solicitud para consultar normativa relacionada, o realiza una búsqueda general.</p>
+<form id="searchForm"><label for="query">¿Qué fundamento necesitas?</label><input id="query" maxlength="4000" required placeholder="Por ejemplo: ejercicio del derecho de acceso"><div class="check-line hidden"><input type="checkbox" id="scopeSubject" disabled><label for="scopeSubject">Filtro no aplicable al corpus normativo</label></div><button id="searchButton">Buscar normativa</button></form>
 <div class="suggestions" aria-label="Consultas sugeridas"><button type="button" data-query="datos de contacto, correo electrónico y teléfono">Datos de contacto</button><button type="button" data-query="solicitudes, consentimiento y preferencias de publicidad">Consentimiento y publicidad</button><button type="button" data-query="plazos y motivos de conservación de datos personales">Conservación de datos</button></div>
 <p id="searchNotice" role="status" aria-live="polite"></p><div id="searchResults"></div>
 </section>

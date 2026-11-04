@@ -3,7 +3,7 @@ from flask import Blueprint, request
 from ..errors import ok
 from ..security import require_role
 from ..services import search_engine
-from ai_engine.search_engine import estado_ia
+from ..services.legal_search import estado_corpus
 
 bp = Blueprint('vector_search', __name__)
 
@@ -11,7 +11,7 @@ bp = Blueprint('vector_search', __name__)
 @bp.get('/ai/status')
 @require_role('dpo')
 def ai_status():
-    return ok(estado_ia())
+    return ok(estado_corpus())
 
 
 @bp.post('/vector-search')

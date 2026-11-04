@@ -68,22 +68,22 @@ test('portal y DPO usan Flask real: ticket, estados, datos, retención, PDF y se
             if (url !== '/api/vector-search') return originalFetch(url, options);
             searchPayload = JSON.parse(options.body);
             if (searchMode === 'failure') return {ok:false, json:async()=>({error:{message:'Prepara la IA local.'}})};
-            const results = searchMode === 'empty' ? [] : [{fuente:'contrato.txt',
-                texto:'Juan Pérez <img src=x onerror=alert(1)> 72839102', score:0.8}];
+            const results = searchMode === 'empty' ? [] : [{fuente:'LEY-TEST — Norma de prueba',
+                texto:'Disposición <img src=x onerror=alert(1)> sobre derecho de acceso', score:0.8}];
             return {ok:true, json:async()=>({data:{results,count:results.length}})};
         };
         $('caseAI').click();
         await until(() => $('searchResults').querySelector('article'));
         assert.equal($('aiPanel').classList.contains('hidden'), false);
-        assert.equal(searchPayload.user_id, '72839102');
+        assert.equal(searchPayload.user_id, undefined);
         assert.equal($('searchResults').querySelector('img'), null);
-        assert.match($('searchResults').textContent, /Similitud: 0.800/);
+        assert.match($('searchResults').textContent, /Relevancia: 0.800/);
         $('searchResults').querySelector('button').click();
-        assert.match($('redactText').value, /72839102/);
+        assert.match($('redactText').value, /derecho de acceso/);
         assert.equal($('redactValues').value, 'Juan Pérez');
         await until(() => !$('searchButton').disabled);
         searchMode = 'empty'; submit('searchForm');
-        await until(() => $('searchNotice').textContent.includes('No hay documentos'));
+        await until(() => $('searchNotice').textContent.includes('No se encontraron disposiciones'));
         assert.equal($('searchResults').childElementCount, 0);
         await until(() => !$('searchButton').disabled);
         searchMode = 'failure'; submit('searchForm');

@@ -29,12 +29,12 @@ document.addEventListener('DOMContentLoaded', () => {
         term.textContent = name; description.textContent = value ?? 'Sin dato'; container.append(term, description);
     }
     async function checkAI() {
-        $('aiStatus').textContent = 'Comprobando modelo e índice local…';
+        $('aiStatus').textContent = 'Comprobando corpus normativo…';
         $('aiStatus').dataset.state = 'pending';
         try {
             const result = await api('/ai/status');
             $('aiStatus').textContent = result.data.ready
-                ? `IA lista · ${result.data.documents} documentos · ${result.data.chunks} fragmentos`
+                ? `Base lista · ${result.data.sources ?? result.data.documents} fuentes · ${result.data.provisions ?? result.data.chunks} disposiciones`
                 : result.data.message;
             $('aiStatus').dataset.state = result.data.ready ? 'success' : 'error';
         } catch (error) {
@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
         $('caseGuide').textContent = guide[selected.request_type];
         $('subjectId').value = selected.user_id;
         $('query').value = 'datos de contacto, información personal y solicitudes';
-        $('scopeSubject').disabled = false; $('scopeSubject').checked = true;
+        $('scopeSubject').disabled = true; $('scopeSubject').checked = false;
         $('aiCase').textContent = `Solicitud ${selected.ticket_id} · ${selected.request_type} · Titular ${selected.user_id}`;
         $('searchResults').replaceChildren(); $('searchNotice').textContent = '';
         $('detailText').textContent = selected.details || 'Sin detalles adicionales.';
@@ -225,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
             $('rectifyForm').classList.add('hidden'); $('portableButton').disabled = true;
             $('subjectName').value = ''; $('subjectEmail').value = '';
             await loadRequests(); $('requestDetail').classList.add('hidden'); selected = null; reviewVersion++;
-            $('searchResults').replaceChildren(); $('searchNotice').textContent = ''; $('aiCase').textContent = 'Titular anonimizado. Los documentos externos requieren revisión y actualización del índice.';
+            $('searchResults').replaceChildren(); $('searchNotice').textContent = ''; $('aiCase').textContent = 'Titular anonimizado. La base normativa no contiene sus datos personales.';
             $('scopeSubject').checked = false; $('scopeSubject').disabled = true;
             $('redactText').value = ''; $('redactValues').value = ''; $('redactResult').textContent = '';
             message('Supresión completada.');
@@ -233,20 +233,19 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     operation($('searchForm'), async () => {
         const version = reviewVersion;
-        $('searchResults').replaceChildren(); $('searchNotice').textContent = 'Buscando con el modelo local…';
+        $('searchResults').replaceChildren(); $('searchNotice').textContent = 'Consultando disposiciones verificadas…';
         const payload = {query: $('query').value, k: 5};
-        if ($('scopeSubject').checked && selected) payload.user_id = selected.user_id;
         let result;
         try { result = await api('/vector-search', { method: 'POST', body: JSON.stringify(payload) }); }
         catch (error) { if (key && version === reviewVersion) $('searchNotice').textContent = 'La búsqueda no se pudo completar. Comprueba el estado de IA de arriba.'; throw error; }
         if (version !== reviewVersion) return;
         $('searchNotice').textContent = result.data.count
-            ? `${result.data.count} fragmentos encontrados. Revisa su pertinencia y los datos de terceros antes de utilizarlos. La similitud mide relación temática, no certeza.`
-            : payload.user_id ? 'No hay documentos indexados que mencionen este ID. Añade los documentos del titular y vuelve a iniciar para actualizar el índice.' : 'No se encontraron fragmentos.';
+            ? `${result.data.count} disposiciones encontradas. Revisa su pertinencia, vigencia y jerarquía antes de utilizarlas.`
+            : 'No se encontraron disposiciones verificadas relacionadas.';
         for (const item of result.data.results) {
             const card = document.createElement('article'); card.className = 'search-result';
             const title = document.createElement('h3'); title.textContent = item.fuente;
-            const score = document.createElement('p'); score.className = 'help'; score.textContent = `Similitud: ${Number(item.score).toFixed(3)}`;
+            const score = document.createElement('p'); score.className = 'help'; score.textContent = `Relevancia: ${Number(item.score).toFixed(3)}`;
             const text = document.createElement('p'); text.className = 'excerpt'; text.textContent = item.texto;
             const copy = document.createElement('button'); copy.type = 'button'; copy.textContent = 'Revisar y ocultar datos de este fragmento';
             copy.onclick = () => { $('redactText').value = item.texto;

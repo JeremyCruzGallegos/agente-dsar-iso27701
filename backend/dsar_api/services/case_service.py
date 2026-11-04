@@ -7,10 +7,9 @@ import unicodedata
 
 from flask import current_app
 
-from ai_engine.search_engine import SearchUnavailable, buscar_pii_vectorial, validar_consulta
-
 from ..errors import ApiError, ValidationError
 from . import audit_service, llm_service
+from .legal_search import SearchUnavailable, buscar_normativa as buscar_pii_vectorial, validar_consulta
 from .validators import require_json
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -90,7 +89,10 @@ def _evidence(results):
         'section': result.get('seccion'),
         'excerpt': result['texto'],
         'score': result['score'],
-        'source_type': _source_type(result['fuente']),
+        'source_type': result.get('source_type') or _source_type(result['fuente']),
+        'source_id': result.get('source_id'),
+        'provision_id': result.get('provision_id'),
+        'official_url': result.get('official_url'),
     } for index, result in enumerate(results, 1)]
 
 
@@ -174,6 +176,23 @@ def _remove_unsupported_rejections(answer):
     return ' '.join(kept).strip(), removed
 
 
+def _remove_uncited_prescriptions(answer):
+    """Evita presentar como obligación una frase que no cite evidencia en línea."""
+    markers = ('debe ', 'deben ', 'debera ', 'tiene que ', 'corresponde ',
+               'es obligatorio', 'esta obligado', 'esta obligada')
+    parts = re.split(r'(?<=[.!?])\s+', answer)
+    kept, removed = [], False
+    for part in parts:
+        plain = _plain(part)
+        if any(marker in plain for marker in markers) and not re.search(r'\[\d+\]', part):
+            removed = True
+        else:
+            kept.append(part)
+    cleaned = ' '.join(kept).strip()
+    cleaned = re.sub(r'Acciones recomendadas:\s*(?:\d+\.\s*)*(?=Límites:)', '', cleaned)
+    return cleaned, removed
+
+
 def analyze(payload):
     payload = require_json(payload)
     try:
@@ -199,6 +218,10 @@ def analyze(payload):
             if removed:
                 generated['limitations'].append(
                     'Se omitió una posible causal de rechazo porque el modelo no aportó una cita directa.')
+            generated['answer'], uncited = _remove_uncited_prescriptions(generated['answer'])
+            if uncited:
+                generated['limitations'].append(
+                    'Se omitieron recomendaciones prescriptivas que no incluían una cita directa.')
             allowed = {row['id'] for row in evidence}
             cited = generated['citations']
             mentioned = {int(value) for value in re.findall(r'\[(\d+)\]', generated['answer'])}
@@ -218,8 +241,8 @@ def analyze(payload):
         except (llm_service.LLMUnavailable, llm_service.LLMInvalid) as exc:
             generated = _fallback(evidence, str(exc))
 
-    audit_service.record('CASE_ANALYSIS', entity_type='document', detail={
+    audit_service.record('CASE_ANALYSIS', entity_type='legal_provision', detail={
         'count': len(evidence), 'mode': generated['mode'], 'model': generated.get('model')})
     return {**generated, 'evidence': evidence,
-            'notice': ('Análisis académico preliminar basado únicamente en documentos locales. '
-                       'Verifica la fuente completa, su fidelidad y vigencia antes de decidir.')}
+        'notice': ('Análisis académico preliminar basado únicamente en disposiciones verificadas '
+                   'de la base de datos. Confirma vigencia y jerarquía antes de decidir.')}

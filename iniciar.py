@@ -1,4 +1,4 @@
-"""Preparar la IA local y abrir el agente DSAR con un solo comando."""
+"""Preparar la base normativa y abrir el agente DSAR con un solo comando."""
 import argparse
 import hashlib
 import importlib.util
@@ -21,11 +21,10 @@ def run(*args):
 
 
 def prepare_dependencies(skip_install=False):
-    names = ('flask', 'flask_sqlalchemy', 'flask_cors', 'dotenv', 'reportlab',
-             'torch', 'sentence_transformers', 'faiss', 'numpy', 'pypdf')
+    names = ('flask', 'flask_sqlalchemy', 'flask_cors', 'dotenv', 'reportlab')
     missing = [name for name in names if importlib.util.find_spec(name) is None]
     digest = hashlib.sha256(b''.join((ROOT / p).read_bytes() for p in
-        ('backend/requirements.txt', 'ai_engine/requirements.txt'))).hexdigest()
+        ('backend/requirements.txt',))).hexdigest()
     stamp = Path(sys.prefix) / '.dsar-dependencies'
     if skip_install:
         if missing:
@@ -37,9 +36,6 @@ def prepare_dependencies(skip_install=False):
     print('Instalando dependencias. La primera vez requiere Internet y puede tardar.', flush=True)
     run('-m', 'pip', 'install', '--upgrade', 'pip')
     run('-m', 'pip', 'install', '-r', ROOT / 'backend/requirements.txt')
-    if importlib.util.find_spec('torch') is None:
-        run('-m', 'pip', 'install', 'torch', '--index-url', 'https://download.pytorch.org/whl/cpu')
-    run('-m', 'pip', 'install', '-r', ROOT / 'ai_engine/requirements.txt')
     stamp.write_text(digest)
 
 
@@ -82,11 +78,8 @@ def main():
         run(ROOT / 'scripts/setup.py', *(['--demo'] if args.demo else []))
         from dotenv import load_dotenv, dotenv_values
         load_dotenv(ROOT / 'backend/.env')
-        print('Preparando el modelo local y actualizando los documentos...', flush=True)
-        configured_model = os.getenv('EMBEDDING_MODEL')
-        model_args = ['--local-model', configured_model] if configured_model and Path(configured_model).is_dir() else []
-        run(ROOT / 'scripts/prepare_ai.py', *model_args)
-        os.environ['EMBEDDING_MODEL'] = dotenv_values(ROOT / 'backend/.env')['EMBEDDING_MODEL']
+        print('Comprobando la base de datos normativa...', flush=True)
+        run(ROOT / 'scripts/prepare_ai.py')
         run(ROOT / 'scripts/check_ai.py')
         if args.solo_preparar:
             return 0

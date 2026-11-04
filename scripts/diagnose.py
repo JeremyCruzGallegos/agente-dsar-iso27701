@@ -1,6 +1,5 @@
 """Diagnóstico de configuración/servicios; no muestra claves ni datos del titular."""
 import argparse
-import importlib.util
 import json
 from pathlib import Path
 import sys
@@ -44,10 +43,10 @@ def main():
         failed = True
     except (URLError, OSError):
         print('Flask no responde: inicia python app.py, verifica puerto y URL.'); failed = True
-    from ai_engine import search_engine
-    print('FAISS:', 'instalado' if importlib.util.find_spec('faiss') else 'FALTA (instala ai_engine/requirements.txt)')
-    print('SentenceTransformers:', 'instalado' if importlib.util.find_spec('sentence_transformers') else 'FALTA')
-    print('Índice local:', 'presente' if Path(search_engine.INDEX_PATH).exists() and Path(search_engine.META_PATH).exists() else 'FALTA (prepara modelo e índice)')
+    with app.app_context():
+        from dsar_api.services.legal_search import estado_corpus
+        status = estado_corpus()
+        print(f"Corpus SQL: {status['sources']} fuentes, {status['provisions']} disposiciones verificadas")
     return int(failed)
 
 

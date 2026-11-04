@@ -6,14 +6,27 @@ services:
     env_file: backend/.env
     environment:
       APP_ENV: production
-      DATABASE_URL: sqlite:////app/backend/instance/dsar.db
+      DATABASE_URL: postgresql+psycopg://dsar:dsar_local@postgres:5432/dsar_agent
       N8N_WEBHOOK_URL: http://n8n:5678/webhook/dsar-request
-      EMBEDDING_MODEL: /app/models_local/embeddings
-    volumes:
-      - dsar_db:/app/backend/instance
-      - ./models_local:/app/models_local:ro
-      - ./ai_engine/data:/app/ai_engine/data:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: dsar_agent
+      POSTGRES_USER: dsar
+      POSTGRES_PASSWORD: dsar_local
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - dsar_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dsar -d dsar_agent"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
   n8n:
     image: docker.n8n.io/n8nio/n8n:2.42.7
     ports:
@@ -28,6 +41,7 @@ services:
     volumes:
       - n8n_data:/home/node/.n8n
     restart: unless-stopped
+
 volumes:
-  dsar_db:
+  dsar_postgres:
   n8n_data:

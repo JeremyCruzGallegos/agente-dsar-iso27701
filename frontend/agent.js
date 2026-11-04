@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 details.append(summary, list); article.append(details);
             }
             const details = document.createElement('details'), summary = document.createElement('summary');
-            summary.textContent = `Ver ${data.evidence.length} fragmentos de evidencia`;
+            summary.textContent = `Ver ${data.evidence.length} disposiciones de evidencia`;
             const evidence = document.createElement('div');
             for (const item of data.evidence) {
                 const card = document.createElement('section'); card.className = 'search-result';
@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!index.ready) throw new Error(index.message);
             $('workspace').classList.remove('hidden'); $('loginForm').classList.add('hidden');
             $('logoutButton').classList.remove('hidden'); $('newChatButton').classList.remove('hidden');
-            $('status').textContent = `Base lista: ${index.documents} documentos y ${index.chunks} fragmentos.`;
+            $('status').textContent = `Base lista: ${index.sources ?? index.documents} fuentes y ${index.provisions ?? index.chunks} disposiciones.`;
             $('modelStatus').textContent = generator.message;
             $('apiKey').value = ''; resetConversation();
         } catch (error) { key = ''; $('status').textContent = error.message; }

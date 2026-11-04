@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from ai_engine.search_engine import SearchUnavailable
+from dsar_api.services.legal_search import SearchUnavailable
 from dsar_api.models import AuditLog
 from tests.conftest import SERVICE
 
@@ -36,9 +36,9 @@ def test_search_returns_results_and_audits_without_query(client, app):
         response = client.post('/api/vector-search', json={'query': ' consulta privada ', 'k': 3}, headers=SERVICE)
         search.assert_called_once_with('consulta privada', 3)
     assert response.status_code == 200
-    assert response.json['data'] == {'results': results, 'count': 1, 'metric': 'cosine_similarity'}
+    assert response.json['data'] == {'results': results, 'count': 1, 'metric': 'weighted_term_match'}
     with app.app_context():
-        entry = AuditLog.query.filter_by(action='VECTOR_SEARCH').one()
+        entry = AuditLog.query.filter_by(action='LEGAL_SEARCH').one()
         assert 'consulta privada' not in entry.detail
         assert 'Texto sintético' not in entry.detail
 
@@ -69,7 +69,7 @@ def test_ai_status_only_available_to_dpo(client):
     assert client.get('/api/ai/status').status_code == 401
     assert client.get('/api/ai/status', headers=SERVICE).status_code == 403
     from tests.conftest import DPO
-    with patch('dsar_api.api.vector_search.estado_ia', return_value={
+    with patch('dsar_api.api.vector_search.estado_corpus', return_value={
         'ready': True, 'documents': 2, 'chunks': 4, 'message': 'IA lista'}):
         result = client.get('/api/ai/status', headers=DPO)
     assert result.status_code == 200

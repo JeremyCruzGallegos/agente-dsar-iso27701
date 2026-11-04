@@ -1,5 +1,5 @@
-"""Adaptador entre la API autenticada y el motor FAISS del equipo."""
-from ai_engine.search_engine import SearchUnavailable, buscar_pii_vectorial, validar_consulta
+"""Adaptador entre la API autenticada y el corpus normativo SQL."""
+from .legal_search import SearchUnavailable, buscar_normativa as buscar_pii_vectorial, validar_consulta
 
 from ..errors import ApiError, ValidationError
 from . import audit_service
@@ -21,9 +21,8 @@ def search(payload):
     except SearchUnavailable as exc:
         raise ApiError(str(exc), code='vector_search_unavailable', status_code=503) from exc
     except Exception as exc:
-        # Evitar que un traceback del encoder exponga la consulta o documentos.
-        raise ApiError('No se pudo completar la búsqueda vectorial.',
+        raise ApiError('No se pudo completar la búsqueda normativa.',
                        code='vector_search_failed', status_code=500) from exc
-    audit_service.record('VECTOR_SEARCH', entity_type='document',
+    audit_service.record('LEGAL_SEARCH', entity_type='legal_provision',
                          detail={'k': k, 'count': len(results)})
-    return {'results': results, 'count': len(results), 'metric': 'cosine_similarity'}
+    return {'results': results, 'count': len(results), 'metric': 'weighted_term_match'}

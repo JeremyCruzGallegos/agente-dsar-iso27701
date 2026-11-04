@@ -1,99 +1,97 @@
-# Agente normativo y de derechos — proyecto académico ISO/IEC 27001/27701
+# Agente normativo y de derechos — ISO/IEC 27001/27701
 
-Agente académico para analizar casos con normativa y documentación institucional local. Combina recuperación semántica con FAISS y conclusiones generadas localmente por Ollama, con citas validadas, historial conversacional y fallback seguro. Incluye, como módulo complementario, gestión de solicitudes de derechos del titular (DSAR).
+Proyecto académico para analizar casos de derechos y privacidad en el contexto universitario.
+El contexto del agente se almacena de forma estructurada en PostgreSQL; no lee PDF, TXT ni
+Markdown. Ollama redacta la conclusión exclusivamente a partir de artículos y cláusulas
+verificados recuperados de la base.
 
-ISO/IEC 27001 es una norma de sistemas de gestión de seguridad de la información, no una ley. ISO/IEC 27701 amplía ese enfoque hacia la gestión de información de privacidad. Las leyes, estatutos y reglamentos aplicables deben incorporarse como fuentes independientes.
+ISO/IEC 27001 no es una ley. Las leyes peruanas, reglamentos, normas institucionales UNSA y
+cláusulas ISO autorizadas se registran como fuentes distintas, conservando entidad emisora,
+vigencia, URL oficial y unidad normativa.
 
-## Arranque rápido
+## Arquitectura
 
-Desde la raíz, con Python 3.11+:
-
-```bash
-python3 iniciar.py --demo
+```text
+PostgreSQL
+  legal_sources       ley, reglamento, ISO o norma UNSA
+  legal_provisions    artículo o cláusula verificable
+  legal_relations     vínculos entre disposiciones
+        │
+        ▼
+recuperación SQL ponderada → evidencia numerada → Ollama → conclusión con citas
 ```
 
-En Windows usa `py -3.12 iniciar.py --demo`. El comando prepara el entorno, las dependencias, el modelo y el índice, comprueba una búsqueda real y abre el panel. La primera ejecución requiere Internet; las siguientes reutilizan el modelo. La clave DPO aparece sólo en la terminal interactiva local y también está en `backend/.env`. Los datos existentes se conservan. El registro funciona inicialmente sin n8n.
+El proyecto también contiene el módulo DSAR para registrar y gestionar solicitudes de acceso,
+rectificación, cancelación/supresión, oposición y portabilidad.
 
-**[Uso sencillo con IA: iniciar y revisar una solicitud](docs/USO_SENCILLO_IA.md)**
+## Inicio recomendado
 
-Después de iniciar, abre `http://127.0.0.1:5000/agente` para analizar un caso con las fuentes locales.
+Requisitos: Python 3.11+, Docker Desktop y Ollama.
 
-Para generar conclusiones instala [Ollama](https://ollama.com/download) y prepara el modelo configurado:
+```powershell
+docker compose up -d postgres
+py -3.12 iniciar.py --demo
+```
+
+Para habilitar conclusiones generativas:
 
 ```powershell
 winget install --id Ollama.Ollama --exact
-ollama pull qwen2.5:1.5b
+ollama pull qwen2.5:3b
 ```
 
-Sin Ollama, el agente conserva la recuperación y muestra las evidencias, pero no presenta una conclusión generada.
+Abre:
 
-**[Configuración en Windows](docs/CONFIGURAR_WINDOWS.md)** · **[Configuración en Linux](docs/CONFIGURAR_LINUX.md)** · **[Instrucciones completas, n8n, Docker y solución de conexión](docs/INICIO_RAPIDO.md)** · **[Estado y validaciones](docs/ESTADO.md)**
+- `http://127.0.0.1:5000/agente`: chat normativo.
+- `http://127.0.0.1:5000/solicitudes`: portal del titular.
+- `http://127.0.0.1:5000/dpo`: panel de gestión.
 
-## Funciones disponibles
+La base normativa empieza vacía. Sigue [Base de datos normativa](docs/BASE_DE_DATOS_NORMATIVA.md)
+para registrar fuentes y artículos mediante la API. No es necesario reconstruir un índice.
 
-- Portal con tickets reales, errores visibles y reintentos idempotentes.
-- DPO autenticado con lista/paginación/filtros, cambios de estado y auditoría.
-- Acceso, portabilidad JSON, rectificación y anonimización de registros SQL sujeta a retención.
-- Constancias PDF sin reproducir datos personales ni detalles libres del expediente.
-- Consola de análisis de casos con evidencia numerada, fuente, sección Markdown y aviso cuando la documentación no basta.
-- Chat local con historial de ocho mensajes, respuesta fundamentada, nivel de confianza y limitaciones.
-- Citas verificadas contra los fragmentos recuperados y separación de casos ficticios frente a fuentes normativas.
-- Ingesta recursiva de `.md`, `.txt` y PDF con texto seleccionable.
-- Skill `skills/analizar-caso-normativo` para exigir análisis fundamentado y evitar conclusiones inventadas.
-- Panel DSAR guiado por solicitud, datos legibles, búsqueda documental y ocultación asistida de PII.
-- Flujo n8n importable y autenticado para registrar solicitudes. La conexión pasa por Flask para mantener las credenciales de servicios fuera del navegador.
-- Scripts de configuración, preparación de IA, diagnóstico y pruebas en GitHub Actions.
+## Controles de calidad
 
-La recepción no acredita identidad ni ejecuta borrados automáticos. El DPO debe verificar y autorizar cada actuación. La supresión SQL no elimina documentos externos ni copias previas del índice: requieren tratamiento y reconstrucción del índice por el responsable. El plazo de respuesta es un parámetro interno, no una determinación legal universal. La ocultación por reglas requiere revisión humana. Este proyecto no constituye una certificación ISO.
+- Solo se recuperan fuentes `active` y disposiciones `verified=true`.
+- Las citas se validan contra la evidencia recuperada.
+- Las fuentes tienen código único y cada artículo es único dentro de su fuente.
+- Una falla de Ollama conserva la evidencia pero no inventa una conclusión.
+- La bitácora guarda metadatos, no el texto de las consultas.
+- El resultado es académico y requiere revisión humana de vigencia y jerarquía.
+
+## API del conocimiento
+
+| Ruta | Rol | Uso |
+| --- | --- | --- |
+| GET `/api/knowledge/status` | Servicio / DPO | Recuento de fuentes y disposiciones verificadas |
+| GET `/api/knowledge/sources` | Servicio / DPO | Lista de fuentes |
+| POST `/api/knowledge/sources` | DPO | Registra una fuente |
+| GET `/api/knowledge/sources/<id>` | Servicio / DPO | Fuente con sus disposiciones |
+| POST `/api/knowledge/sources/<id>/provisions` | DPO | Registra un artículo o cláusula |
+| PATCH `/api/knowledge/provisions/<id>` | DPO | Corrige o verifica una disposición |
+| POST `/api/vector-search` | Servicio / DPO | Recuperación normativa ponderada |
+| POST `/api/case-analysis` | Servicio / DPO | Análisis con evidencia y conclusión local |
+| GET `/api/agent/status` | DPO | Estado de Ollama |
+
+Las rutas privadas usan `X-API-Key`. Las claves se generan en `backend/.env`, archivo excluido de Git.
 
 ## Estructura
 
 ```text
-frontend/         Portal, panel DPO y pruebas JS/DOM
-backend/          API, modelos, servicios, pruebas y .env.example
-ai_engine/        Embeddings locales, índice FAISS y documentos ficticios
-n8n_workflows/    dsar-request.json importable
-scripts/          setup.py, prepare_ai.py y diagnose.py
-iniciar.py        Preparación de IA y arranque con un comando
-docs/             Inicio rápido y estado verificado
-app.py            Arranque desde la raíz
-Dockerfile        Backend con Gunicorn y soporte PDF
-compose.yaml      Backend y n8n con volúmenes persistentes
+backend/       API, modelos SQL, servicios y pruebas
+database/      DDL PostgreSQL del corpus normativo
+frontend/      Chat, portal y panel DPO
+skills/        Skill de análisis normativo trazable
+scripts/       Inicialización, comprobación y diagnóstico
+docs/          Guías del proyecto
+compose.yaml   PostgreSQL local persistente
 ```
 
-## API
+## Pruebas
 
-| Ruta | Acceso | Uso |
-| --- | --- | --- |
-| GET `/api/health` | Público | Conexión SQL y tablas inicializadas |
-| POST `/api/intake` | Público, Idempotency-Key requerido | Registro desde el portal; sólo devuelve ticket |
-| POST/GET `/api/requests` | Servicio / DPO | Registro interno y listado |
-| GET `/api/requests/<ticket>` | Servicio / DPO | Detalle |
-| PATCH `/api/requests/<ticket>/status` | Servicio / DPO | Transiciones validadas |
-| GET `/api/requests/<ticket>/report.pdf` | DPO | Constancia y trazabilidad |
-| GET `/api/user-data?user_id=...` | Servicio / DPO | Acceso; `format=portable` para JSON portable |
-| POST `/api/users` | Servicio / DPO | Alta de titular |
-| PATCH `/api/rectify-user` | Servicio / DPO | Cambios de nombre/correo |
-| POST `/api/delete-user` | Servicio / DPO | Anonimización con control de retención |
-| POST `/api/vector-search` | Servicio / DPO | `{"query":"texto","k":5}`; índice/modelo deben estar preparados |
-| POST `/api/case-analysis` | Servicio / DPO | Caso e historial; conclusión RAG local con citas y fallback |
-| GET `/api/agent/status` | DPO | Estado y nombre del modelo generativo local de Ollama |
-| GET `/api/ai/status` | DPO | Comprueba modelo/índice reales; muestra disponibilidad y recuentos |
-| POST `/api/redact` | Servicio / DPO | `{"text":"texto","values":["nombre"]}`; revisión obligatoria |
-| GET `/api/audit-log` | DPO | Bitácora con filtros y paginación |
-
-Las rutas privadas usan `X-API-Key`. La auditoría referencia documentos con HMAC; no almacena las consultas semánticas ni el texto procesado por redacción. Conserva metadatos operativos, incluido actor y dirección IP. No incluye las claves en el código cliente. Configuración en `backend/.env`, excluida de Git.
-
-## Modelo local
-
-El repositorio no incluye actualmente un corpus de ejemplo: se retiraron fuentes ficticias, incompletas o sin trazabilidad. Añade documentos usando [la plantilla validada](docs/PLANTILLA_FUENTE.md).
-
-```bash
-python -m pip install -r ai_engine/requirements.txt
-python scripts/validate_documents.py
-python scripts/prepare_ai.py
+```powershell
+.\.venv\Scripts\python.exe -m pytest backend\tests -q
+$env:PYTHON=(Resolve-Path '.venv\Scripts\python.exe').Path
+npm test
 ```
 
-Reinicia Flask y utiliza la búsqueda del panel. Una respuesta 503 identifica modelo/índice/dependencias ausentes; no se sustituyen los resultados por datos inventados.
-
-La API vector-search admite `user_id` opcional para ordenar sólo fragmentos de documentos que mencionan literalmente ese ID. El filtro no acredita identidad ni evita que un archivo contenga datos de terceros; el DPO revisa los resultados. Con `iniciar.py`, la preparación y actualización del índice se realizan antes de arrancar.
+Este proyecto no sustituye asesoría legal, una decisión administrativa ni una certificación ISO.

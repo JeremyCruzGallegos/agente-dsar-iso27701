@@ -17,11 +17,11 @@ test('agente mantiene historial, muestra citas y limpia la conversación', async
     const window = dom.window, payloads = [];
     window.HTMLElement.prototype.scrollIntoView = () => {};
     window.fetch = async (url, options = {}) => {
-        if (url === '/api/ai/status') return {ok:true, json:async()=>({data:{ready:true,documents:3,chunks:9}})};
+        if (url === '/api/ai/status') return {ok:true, json:async()=>({data:{ready:true,documents:3,chunks:9,case_guides:50}})};
         if (url === '/api/agent/status') return {ok:true, json:async()=>({data:{ready:true,model:'test',message:'Modelo listo.'}})};
         if (url === '/api/case-analysis') {
             payloads.push(JSON.parse(options.body));
-            return {ok:true, json:async()=>({data:{answer:'Conclusión fundada [1].',mode:'generative_rag',model:'test',confidence:'media',limitations:[],notice:'Revisar.',evidence:[{id:1,source:'legislacion/norma.md',section:'Artículo 1',source_type:'normative',score:.8,excerpt:'Texto'}]}})};
+            return {ok:true, json:async()=>({data:{answer:'Conclusión fundada [1].',mode:'generative_rag',model:'test',confidence:'media',limitations:[],notice:'Revisar.',case_guides:[{code:'UNSA-CG-001',title:'Datos en aula virtual',area:'Acceso',scenario:'Caso UNSA.',reasoning_focus:'Identificar el sistema.'}],evidence:[{id:1,source:'legislacion/norma.md',section:'Artículo 1',source_type:'normative',score:.8,excerpt:'Texto'}]}})};
         }
         throw new Error('URL inesperada: ' + url);
     };
@@ -30,11 +30,13 @@ test('agente mantiene historial, muestra citas y limpia la conversación', async
     const $ = id => window.document.getElementById(id);
     $('apiKey').value = 'clave'; $('loginForm').dispatchEvent(new window.Event('submit', {cancelable:true}));
     await until(() => !$('workspace').classList.contains('hidden'));
+    assert.match($('status').textContent, /50 casos guía UNSA/);
 
     $('caseText').value = 'Primer caso'; $('caseForm').dispatchEvent(new window.Event('submit', {cancelable:true}));
     await until(() => payloads.length === 1 && !$('analyzeButton').disabled);
     assert.deepEqual(payloads[0].history, []);
     assert.match($('conversation').textContent, /Conclusión fundada \[1\]/);
+    assert.match($('conversation').textContent, /Contexto UNSA aplicado/);
 
     $('caseText').value = 'Pregunta de seguimiento'; $('caseForm').dispatchEvent(new window.Event('submit', {cancelable:true}));
     await until(() => payloads.length === 2 && !$('analyzeButton').disabled);

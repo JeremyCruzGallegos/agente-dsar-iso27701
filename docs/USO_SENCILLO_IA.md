@@ -29,7 +29,7 @@ DATABASE_URL=postgresql+psycopg://dsar:dsar_local@127.0.0.1:5432/dsar_agent
 
 ```powershell
 winget install --id Ollama.Ollama --exact
-ollama pull qwen2.5:3b
+ollama pull qwen2.5:1.5b
 ```
 
 Sin Ollama puedes comprobar la recuperación y las evidencias, pero no se genera una conclusión.

@@ -162,6 +162,7 @@ def test_generation_retries_once_when_model_omits_all_citations(app):
              'confidence': 'media', 'model': 'modelo'}
     second = {'answer': 'Conclusión corregida [1].', 'citations': [1], 'limitations': [],
               'confidence': 'media', 'model': 'modelo'}
+    app.config['LLM_ENABLE_RETRY'] = True
     with app.app_context(), patch(GENERATE, side_effect=[first, second]) as generate:
         result = _generate_with_citation_retry([{'role': 'user', 'content': 'Caso'}])
     assert result['citations'] == [1]
@@ -175,6 +176,7 @@ def test_uncited_imperative_action_requires_retry(app):
              'citations': [1], 'limitations': [], 'confidence': 'media', 'model': 'modelo'}
     second = {'answer': 'ANÁLISIS: Evidencia [1]. ACCIONES: Revisar el procedimiento [1].',
               'citations': [1], 'limitations': [], 'confidence': 'media', 'model': 'modelo'}
+    app.config['LLM_ENABLE_RETRY'] = True
     with app.app_context(), patch(GENERATE, side_effect=[first, second]) as generate:
         result = _generate_with_citation_retry([{'role': 'user', 'content': 'Caso'}])
     assert generate.call_count == 2
@@ -190,6 +192,17 @@ def test_prescription_is_grounded_with_matching_evidence():
     result = _ground_prescriptions(generated, evidence)
     assert result['answer'].endswith('[4].')
     assert result['citations'] == [4]
+
+
+def test_fast_mode_does_not_generate_twice(app):
+    from dsar_api.services.case_service import _generate_with_citation_retry
+    generated = {'answer': 'ANÁLISIS: Evidencia [1]. ACCIONES: Revisar sin cita.',
+                 'citations': [1], 'limitations': [], 'confidence': 'media', 'model': 'modelo'}
+    app.config['LLM_ENABLE_RETRY'] = False
+    with app.app_context(), patch(GENERATE, return_value=generated) as generate:
+        result = _generate_with_citation_retry([{'role': 'user', 'content': 'Caso'}])
+    assert result['citations'] == [1]
+    assert generate.call_count == 1
 
 
 def test_agent_status_is_private(client):

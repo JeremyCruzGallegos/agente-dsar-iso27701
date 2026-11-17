@@ -8,7 +8,7 @@ import unicodedata
 from sqlalchemy import func
 
 from ..extensions import db
-from ..models import LegalProvision, LegalSource
+from ..models import InstitutionalCaseGuide, LegalProvision, LegalSource
 
 
 class SearchUnavailable(RuntimeError):
@@ -120,9 +120,11 @@ def estado_corpus():
         sources = LegalSource.query.filter_by(status="active").count()
         provisions = (db.session.query(func.count(LegalProvision.id)).join(LegalSource)
                       .filter(LegalSource.status == "active", LegalProvision.verified.is_(True)).scalar())
+        guides = InstitutionalCaseGuide.query.filter_by(active=True).count()
         ready = bool(provisions)
         return {"ready": ready, "documents": sources, "chunks": provisions,
                 "sources": sources, "provisions": provisions,
+                "case_guides": guides,
                 "message": ("Corpus normativo de base de datos listo."
                             if ready else "La base no contiene disposiciones verificadas.")}
     except Exception as exc:

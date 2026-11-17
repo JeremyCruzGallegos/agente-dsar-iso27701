@@ -7,6 +7,8 @@ description: Analiza casos universitarios de derechos, privacidad o seguridad us
 
 Identifica primero los hechos, la pregunta y el derecho o proceso posiblemente afectado. Recupera las disposiciones relacionadas desde la base de datos normativa.
 
+Consulta también los casos guía UNSA para reconocer procesos, actores y datos faltantes. Los casos guía sirven para estructurar el razonamiento institucional, pero no son normas, no crean obligaciones y nunca sustituyen una cita de una disposición verificada.
+
 Para cada conclusión:
 
 - cita el código de fuente, artículo o cláusula y el identificador de la disposición;

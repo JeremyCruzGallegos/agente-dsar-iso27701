@@ -92,3 +92,26 @@ class LegalRelation(db.Model):
     )
     relation_type = db.Column(db.String(30), nullable=False)
     explanation = db.Column(db.Text, nullable=True)
+
+
+class InstitutionalCaseGuide(db.Model):
+    """Caso institucional reutilizable; orienta el análisis, pero no es una norma."""
+    __tablename__ = "institutional_case_guides"
+
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(30), unique=True, nullable=False, index=True)
+    title = db.Column(db.String(250), nullable=False)
+    area = db.Column(db.String(100), nullable=False, index=True)
+    scenario = db.Column(db.Text, nullable=False)
+    reasoning_focus = db.Column(db.Text, nullable=False)
+    keywords = db.Column(db.Text, nullable=False)
+    active = db.Column(db.Boolean, nullable=False, default=True, index=True)
+    created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow)
+    updated_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utcnow, onupdate=utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id, "code": self.code, "title": self.title, "area": self.area,
+            "scenario": self.scenario, "reasoning_focus": self.reasoning_focus,
+            "keywords": self.keywords, "active": self.active,
+        }

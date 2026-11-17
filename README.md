@@ -37,7 +37,7 @@ Para habilitar conclusiones generativas:
 
 ```powershell
 winget install --id Ollama.Ollama --exact
-ollama pull qwen2.5:3b
+ollama pull qwen2.5:1.5b
 ```
 
 Abre:

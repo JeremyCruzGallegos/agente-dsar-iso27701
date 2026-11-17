@@ -5,6 +5,7 @@ El agente ya no lee PDF, TXT ni Markdown. Su contexto procede de PostgreSQL y se
 - `legal_sources`: identifica la ley, reglamento, estándar ISO, norma institucional o jurisprudencia.
 - `legal_provisions`: guarda cada artículo, cláusula o disposición como una unidad consultable.
 - `legal_relations`: relaciona disposiciones que implementan, complementan, modifican o contradicen otras.
+- `institutional_case_guides`: contiene 50 situaciones típicas UNSA para orientar el razonamiento. No son normas ni fundamentan conclusiones.
 
 Solo participan en las respuestas las fuentes con `status = active` y las disposiciones con
 `verified = true`. No guardes una norma completa en un único registro: crea una disposición por
@@ -114,6 +115,18 @@ La importación reemplaza únicamente las disposiciones de las fuentes administr
 transcripciones incompletas se conservan con `verified=false`, por lo que no fundamentan respuestas.
 La copia de ISO/IEC 27701 es de uso local autorizado por el equipo y está excluida de Git; cada integrante
 debe colocar su copia autorizada con el mismo nombre antes de ejecutar la importación.
+
+## Cargar los 50 casos guía UNSA
+
+Después de inicializar PostgreSQL, ejecuta:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\seed_unsa_case_guides.py
+```
+
+El comando es idempotente: crea o actualiza `UNSA-CG-001` a `UNSA-CG-050` sin duplicarlos. Estos registros
+ayudan a reconocer procesos universitarios (admisión, aula virtual, biblioteca, investigación, incidentes,
+proveedores y derechos), pero el agente solo cita como fundamento las disposiciones verificadas.
 
 ## Campos sugeridos para el proyecto UNSA
 

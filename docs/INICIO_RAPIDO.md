@@ -3,7 +3,7 @@
 ```powershell
 docker compose up -d postgres
 py -3.12 iniciar.py --demo
-ollama pull qwen2.5:3b
+ollama pull qwen2.5:1.5b
 ```
 
 Después registra fuentes y disposiciones con la guía [Base de datos normativa](BASE_DE_DATOS_NORMATIVA.md).

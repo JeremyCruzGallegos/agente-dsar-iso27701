@@ -9,6 +9,7 @@ from flask import current_app
 
 from ..errors import ApiError, ValidationError
 from . import audit_service, llm_service
+from .case_guide_service import buscar_casos_guia
 from .legal_search import SearchUnavailable, buscar_normativa as buscar_pii_vectorial, validar_consulta
 from .validators import require_json
 
@@ -105,7 +106,7 @@ def _skill_rules():
                 'Indica cuando la evidencia sea insuficiente.')
 
 
-def _messages(case, history, evidence, *, followup=False):
+def _messages(case, history, evidence, *, followup=False, guides=None):
     max_chars = current_app.config['LLM_CONTEXT_MAX_CHARS']
     blocks, used = [], 0
     normative = [item for item in evidence if item['source_type'] in ('normative', 'institutional')]
@@ -129,7 +130,8 @@ def _messages(case, history, evidence, *, followup=False):
     response_rules = (
         'Responde únicamente con el resultado final en texto plano. ' + shape + ' '
         'Usa exactamente estos títulos y ningún otro: ANÁLISIS, CONCLUSIÓN, ACCIONES RECOMENDADAS y LÍMITES. '
-        'ANÁLISIS debe tener como máximo 4 viñetas; CONCLUSIÓN un párrafo; ACCIONES un máximo de 5 pasos. '
+        'Sé breve: ANÁLISIS debe tener como máximo 3 viñetas de una oración; CONCLUSIÓN una oración; '
+        'ACCIONES un máximo de 4 pasos de una oración. '
         'No crees apartados llamados Hechos, Derecho, Fuentes o Condiciones. '
         'Cada afirmación documental debe incluir citas [n] usando solo los IDs proporcionados. '
         'No inventes causales de rechazo, requisitos, plazos ni obligaciones. Si falta información, '
@@ -144,9 +146,20 @@ def _messages(case, history, evidence, *, followup=False):
         + _skill_rules() + '\n\n' + response_rules
     )
     messages = [{'role': 'system', 'content': system}]
-    messages.extend(history[-MAX_HISTORY:])
+    messages.extend(history[-4:])
     context = '\n\n'.join(blocks)
-    messages.append({'role': 'user', 'content': f'CASO ACTUAL:\n{case}\n\nEVIDENCIA RECUPERADA:\n{context}'})
+    guide_blocks = []
+    for guide in guides or []:
+        guide_blocks.append(
+            f"{guide['code']} — {guide['title']} ({guide['area']})\n"
+            f"Situación similar: {guide['scenario']}\nEnfoque sugerido: {guide['reasoning_focus']}"
+        )
+    guide_context = '\n\n'.join(guide_blocks) or 'No se recuperó un caso guía similar.'
+    messages.append({'role': 'user', 'content': (
+        f'CASO ACTUAL:\n{case}\n\nEVIDENCIA NORMATIVA RECUPERADA:\n{context}\n\n'
+        'CASOS GUÍA UNSA (solo orientan el razonamiento; no son normas ni se citan como fundamento):\n'
+        f'{guide_context}'
+    )})
     return messages
 
 
@@ -248,6 +261,10 @@ def _generate_with_citation_retry(messages, evidence=None):
     generated = _ground_prescriptions(llm_service.generate(messages), evidence or [])
     if generated['citations'] and not _has_uncited_prescriptions(generated['answer']):
         return generated
+    if not current_app.config.get('LLM_ENABLE_RETRY', False):
+        if not generated['citations']:
+            raise llm_service.LLMInvalid('El modelo no produjo una respuesta con citas en línea.')
+        return generated
     correction = (
         'Reescribe tu respuesta anterior conservando únicamente afirmaciones sustentadas. '
         'Cada viñeta de ANÁLISIS, cada oración de CONCLUSIÓN y cada paso de ACCIONES RECOMENDADAS '
@@ -270,9 +287,12 @@ def analyze(payload):
     except ValueError as exc:
         raise ValidationError(str(exc).replace('query', 'case')) from exc
     history = _history(payload.get('history'))
+    guides = []
     try:
         retrieval_query, followup = _retrieval_query(case, history)
-        evidence = _evidence(buscar_pii_vectorial(retrieval_query, 8))
+        evidence = _evidence(buscar_pii_vectorial(
+            retrieval_query, current_app.config['LLM_EVIDENCE_LIMIT']))
+        guides = buscar_casos_guia(retrieval_query, current_app.config['LLM_GUIDE_LIMIT'])
     except SearchUnavailable as exc:
         raise ApiError(str(exc), code='case_analysis_unavailable', status_code=503) from exc
     except Exception as exc:
@@ -283,7 +303,7 @@ def analyze(payload):
     else:
         try:
             generated = _generate_with_citation_retry(_messages(
-                case, history if followup else [], evidence, followup=followup), evidence)
+                case, history if followup else [], evidence, followup=followup, guides=guides), evidence)
             generated['answer'], removed = _remove_unsupported_rejections(generated['answer'])
             if removed:
                 generated['limitations'].append(
@@ -313,6 +333,6 @@ def analyze(payload):
 
     audit_service.record('CASE_ANALYSIS', entity_type='legal_provision', detail={
         'count': len(evidence), 'mode': generated['mode'], 'model': generated.get('model')})
-    return {**generated, 'evidence': evidence,
+    return {**generated, 'evidence': evidence, 'case_guides': guides,
         'notice': ('Análisis académico preliminar basado únicamente en disposiciones verificadas '
                    'de la base de datos. Confirma vigencia y jerarquía antes de decidir.')}

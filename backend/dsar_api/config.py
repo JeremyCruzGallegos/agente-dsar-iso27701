@@ -31,7 +31,11 @@ class BaseConfig:
     OLLAMA_BASE_URL = "http://127.0.0.1:11434"
     OLLAMA_MODEL = "qwen2.5:1.5b"
     OLLAMA_TIMEOUT_SECONDS = 120
-    LLM_CONTEXT_MAX_CHARS = 8000
+    LLM_CONTEXT_MAX_CHARS = 4500
+    LLM_EVIDENCE_LIMIT = 5
+    LLM_GUIDE_LIMIT = 2
+    LLM_MAX_OUTPUT_TOKENS = 320
+    LLM_ENABLE_RETRY = False
 
 
 class DevelopmentConfig(BaseConfig):
@@ -93,7 +97,12 @@ def environment_overrides():
     if "CORS_ORIGINS" in os.environ:
         values["CORS_ORIGINS"] = _csv(os.environ["CORS_ORIGINS"])
     for name in ("DSAR_SLA_DAYS", "N8N_TIMEOUT_SECONDS", "OLLAMA_TIMEOUT_SECONDS",
-                 "LLM_CONTEXT_MAX_CHARS"):
+                 "LLM_CONTEXT_MAX_CHARS", "LLM_EVIDENCE_LIMIT", "LLM_GUIDE_LIMIT",
+                 "LLM_MAX_OUTPUT_TOKENS"):
         if name in os.environ:
             values[name] = int(os.environ[name])
+    if "LLM_ENABLE_RETRY" in os.environ:
+        values["LLM_ENABLE_RETRY"] = os.environ["LLM_ENABLE_RETRY"].strip().lower() in (
+            "1", "true", "yes", "si"
+        )
     return values

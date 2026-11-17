@@ -46,7 +46,22 @@ CREATE TABLE IF NOT EXISTS legal_relations (
     CONSTRAINT uq_legal_relation UNIQUE (from_provision_id, to_provision_id, relation_type)
 );
 
+CREATE TABLE IF NOT EXISTS institutional_case_guides (
+    id SERIAL PRIMARY KEY,
+    code VARCHAR(30) NOT NULL UNIQUE,
+    title VARCHAR(250) NOT NULL,
+    area VARCHAR(100) NOT NULL,
+    scenario TEXT NOT NULL,
+    reasoning_focus TEXT NOT NULL,
+    keywords TEXT NOT NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE INDEX IF NOT EXISTS ix_legal_sources_status ON legal_sources(status);
 CREATE INDEX IF NOT EXISTS ix_legal_provisions_verified ON legal_provisions(verified);
 CREATE INDEX IF NOT EXISTS ix_legal_provisions_topic ON legal_provisions(topic);
 CREATE INDEX IF NOT EXISTS ix_legal_provisions_right_type ON legal_provisions(right_type);
+CREATE INDEX IF NOT EXISTS ix_institutional_case_guides_area ON institutional_case_guides(area);
+CREATE INDEX IF NOT EXISTS ix_institutional_case_guides_active ON institutional_case_guides(active);

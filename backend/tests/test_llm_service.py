@@ -16,8 +16,9 @@ def test_plain_ollama_response_extracts_citations(app):
     assert 'format' not in payload
     assert payload['stream'] is False
     assert payload['options']['temperature'] == 0
-    assert payload['options']['num_predict'] == 850
-    assert payload['keep_alive'] == '2m'
+    assert payload['options']['num_predict'] == 320
+    assert payload['options']['num_ctx'] == 4096
+    assert payload['keep_alive'] == '30m'
 
 
 def test_empty_response_is_rejected(app):

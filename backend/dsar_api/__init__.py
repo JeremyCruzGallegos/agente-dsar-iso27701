@@ -33,6 +33,12 @@ def create_app(config_name: str | None = None) -> Flask:
         raise RuntimeError("OLLAMA_TIMEOUT_SECONDS debe estar entre 5 y 600.")
     if not 1000 <= app.config["LLM_CONTEXT_MAX_CHARS"] <= 50000:
         raise RuntimeError("LLM_CONTEXT_MAX_CHARS debe estar entre 1000 y 50000.")
+    if not 1 <= app.config["LLM_EVIDENCE_LIMIT"] <= 12:
+        raise RuntimeError("LLM_EVIDENCE_LIMIT debe estar entre 1 y 12.")
+    if not 0 <= app.config["LLM_GUIDE_LIMIT"] <= 5:
+        raise RuntimeError("LLM_GUIDE_LIMIT debe estar entre 0 y 5.")
+    if not 100 <= app.config["LLM_MAX_OUTPUT_TOKENS"] <= 1200:
+        raise RuntimeError("LLM_MAX_OUTPUT_TOKENS debe estar entre 100 y 1200.")
 
     # Carpeta para la BD SQLite local (ignorada por git).
     (Path(__file__).resolve().parent.parent / "instance").mkdir(exist_ok=True)

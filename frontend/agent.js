@@ -29,6 +29,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 data.limitations.forEach(value => { const item = document.createElement('li'); item.textContent = value; list.append(item); });
                 details.append(summary, list); article.append(details);
             }
+            if (data.case_guides?.length) {
+                const guideDetails = document.createElement('details');
+                const guideSummary = document.createElement('summary');
+                guideSummary.textContent = `Contexto UNSA aplicado (${data.case_guides.length} casos guía)`;
+                const guideList = document.createElement('div');
+                for (const guide of data.case_guides) {
+                    const card = document.createElement('section'); card.className = 'search-result';
+                    const title = document.createElement('h4');
+                    title.textContent = `${guide.code} — ${guide.title} · ${guide.area}`;
+                    const scenario = document.createElement('p'); scenario.textContent = guide.scenario;
+                    const focus = document.createElement('p'); focus.className = 'help';
+                    focus.textContent = `Enfoque: ${guide.reasoning_focus}`;
+                    card.append(title, scenario, focus); guideList.append(card);
+                }
+                guideDetails.append(guideSummary, guideList); article.append(guideDetails);
+            }
             const details = document.createElement('details'), summary = document.createElement('summary');
             summary.textContent = `Ver ${data.evidence.length} disposiciones de evidencia`;
             const evidence = document.createElement('div');
@@ -61,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!index.ready) throw new Error(index.message);
             $('workspace').classList.remove('hidden'); $('loginForm').classList.add('hidden');
             $('logoutButton').classList.remove('hidden'); $('newChatButton').classList.remove('hidden');
-            $('status').textContent = `Base lista: ${index.sources ?? index.documents} fuentes y ${index.provisions ?? index.chunks} disposiciones.`;
+            $('status').textContent = `Base lista: ${index.sources ?? index.documents} fuentes, ${index.provisions ?? index.chunks} disposiciones verificadas y ${index.case_guides ?? 0} casos guía UNSA.`;
             $('modelStatus').textContent = generator.message;
             $('apiKey').value = ''; resetConversation();
         } catch (error) { key = ''; $('status').textContent = error.message; }

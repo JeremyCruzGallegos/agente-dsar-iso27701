@@ -144,6 +144,9 @@ def update_status(ticket_id: str, payload) -> DsarRequest:
             code="invalid_transition",
         )
 
+    if req.request_type == RequestType.OPOSICION and new_status in CLOSED_STATUSES and not note:
+        raise ValidationError("Registra el motivo y alcance de la decisión de oposición antes del cierre.")
+
     previous = req.status
     req.status = new_status
     if note:

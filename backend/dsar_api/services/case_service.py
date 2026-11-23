@@ -10,7 +10,7 @@ from flask import current_app
 from ..errors import ApiError, ValidationError
 from . import audit_service, llm_service
 from .case_guide_service import buscar_casos_guia
-from .legal_search import SearchUnavailable, buscar_normativa as buscar_pii_vectorial, validar_consulta
+from .legal_search import comparison_codes, SearchUnavailable, buscar_normativa as buscar_pii_vectorial, validar_consulta
 from .validators import require_json
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -93,6 +93,8 @@ def _evidence(results):
         'source_type': result.get('source_type') or _source_type(result['fuente']),
         'source_id': result.get('source_id'),
         'provision_id': result.get('provision_id'),
+        'origin': result.get('origin'),
+        'record_code': result.get('record_code'),
         'official_url': result.get('official_url'),
     } for index, result in enumerate(results, 1)]
 
@@ -280,31 +282,116 @@ def _generate_with_citation_retry(messages, evidence=None):
     return retried
 
 
+def _risk_comparison(codes, evidence):
+    """El índice inicial procede de la evaluación y el previsto de la matriz de tratamiento."""
+    lines = ['Riesgo | Índice inicial | Residual previsto | Estado de aceptación']
+    citations, missing = [], []
+    for code in codes:
+        values = {}
+        for row in evidence:
+            if row['record_code'] != code:
+                continue
+            fields = dict(line.split(': ', 1) for line in row['excerpt'].splitlines() if ': ' in line)
+            for field in ('Índice inicial', 'Índice residual previsto', 'Aceptación'):
+                if field not in fields or (field == 'Índice inicial' and 'Índice residual previsto' in fields):
+                    continue
+                values[field] = f"{fields[field]} [{row['id']}]"
+                citations.append(row['id'])
+        cells = []
+        for field in ('Índice inicial', 'Índice residual previsto', 'Aceptación'):
+            cells.append(values.get(field, 'Sin dato'))
+            if field not in values:
+                missing.append(f'{code}: {field}')
+        lines.append(' | '.join([code, *cells]))
+    lines.append('El residual previsto es una meta cuya eficacia requiere verificación.')
+    result = _fallback(evidence, 'Comparación de filas importadas de las matrices.')
+    result.update(answer='\n'.join(lines), citations=list(dict.fromkeys(citations)),
+                  coverage=('partial' if citations else 'insufficient_evidence') if missing else 'evidence_found',
+                  limitations=missing, mode='document_comparison')
+    return result
+
+
+def _identity_states(text):
+    plain = _plain(text)
+    if not re.search(r'identidad|acreditacion', plain):
+        return set()
+    states = set()
+    if re.search(r'pendiente|falta (?:de )?acreditacion|sin (?:identidad |verificar|acreditar)|no (?:se )?(?:ha )?verific', plain):
+        states.add('pendiente')
+    positive = re.sub(r'(?:no (?:se )?(?:ha )?verific\w* (?:la )?identidad|sin identidad verificada|identidad no verificada)', '', plain)
+    if re.search(r'identidad (?:ya )?(?:fue |esta )?(?:verificada|acreditada)|(?:verifico|acredito) (?:la |su )?identidad', positive):
+        states.add('verificada')
+    return states
+
+
 def _pims_answer(question, evidence):
     passages, owners = {}, {}
     remaining = current_app.config['LLM_CONTEXT_MAX_CHARS']
-    # El modelo selecciona pasajes del apartado mejor ubicado. El operador puede abrir los demás.
-    row = evidence[0]
-    for idx, paragraph in enumerate(row['excerpt'].splitlines(), 1):
-        paragraph = paragraph.strip()
-        if not paragraph or paragraph.startswith(('|---', '| Momento simulado')):
-            continue
-        label = str(idx)
-        descriptor = f"{row['section']} — {paragraph}"
+    plain = _plain(question)
+    deadline = re.search(r'plazo|cuantos dias|cuanto tiempo|termino legal', plain)
+    wants_duration = re.search(r'legal|habiles|exact[oa]|cuantos dias', plain)
+    wants_approval = 'aprob' in plain and re.search(r'fecha|quien|cuando|firma', plain)
+    wants_table = re.search(r'\b(tabla|celda)\b', plain)
+    course_refs = re.search(r'clausul|controles|referencias', plain)
+    candidates = []
+    for row in evidence:
+        for idx, paragraph in enumerate(row['excerpt'].splitlines(), 1):
+            if not paragraph.strip() or paragraph.startswith(('|---', '| Momento simulado')):
+                continue
+            normalized = _plain(paragraph)
+            if (wants_table and not (row.get('origin') or {}).get('file', '').endswith('.xlsx')
+                    and not (re.match(r'Tabla \d+, fila \d+:', paragraph) or paragraph.startswith('|'))):
+                continue
+            if deadline and wants_duration:
+                if not (re.search(r'\b(?:\d+|un[oa]?|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|quince|veinte|treinta) dias? (?:habi(?:l|les)|calendario|natural(?:es)?)\b', normalized)
+                        and re.search(r'legal|ley|reglamento', normalized)
+                        and not re.search(r'sla|plazo interno', normalized)):
+                    continue
+            if wants_approval and not (re.search(r'aprobad[oa] (?:por|el)', normalized)
+                                       and not re.search(r'pendiente|sin aprobar', normalized)):
+                continue
+            if course_refs and any(item['record_code'] == 'ficha' for item in evidence):
+                if 'guia del curso' not in normalized:
+                    continue
+            candidates.append((row, idx, paragraph))
+    if not candidates:
+        field = 'el plazo legal exacto en días' if deadline and wants_duration else ('la aprobación solicitada' if wants_approval else 'el dato solicitado')
+        first = evidence[0]
+        reason = f"Los apartados consultados de {first['source']} no especifican {field}."
+        result = _fallback(evidence, reason)
+        result.update(answer=f"{reason} [{first['id']}]", coverage='partial', citations=[first['id']])
+        return result
+    # Alternar apartados dentro del presupuesto de contexto.
+    for row, idx, paragraph in sorted(candidates, key=lambda item: item[1]):
+        label = f"{row['id']}.{idx}"
+        descriptor = f"{row['source']} §{row['section']} — {paragraph}"
         if len(descriptor) <= remaining:
             passages[label] = descriptor
             owners[label] = (row['id'], paragraph)
             remaining -= len(descriptor)
+    row, _, fallback_text = candidates[0]
+    if not (deadline and wants_duration or course_refs or wants_approval or wants_table):
+        fallback_text = row['excerpt']
+    requested_states = _identity_states(question)
+    eligible = {label for label, passage in passages.items()
+                if len(requested_states) == 1 and requested_states <= _identity_states(passage)}
+    if eligible:
+        eligible_rows = {owners[label][0] for label in eligible}
+        row = next(item for item in evidence if item['id'] in eligible_rows)
+        fallback_text = row['excerpt']
     try:
         selected, model = llm_service.select_passages(question, passages) if passages else ([], None)
     except (llm_service.LLMInvalid, llm_service.LLMUnavailable) as exc:
         answer = _fallback(evidence, str(exc))
-        first = evidence[0]
-        answer.update(answer=f"Fragmento recuperado [{first['id']}]\n{first['excerpt']}", citations=[first['id']])
+        answer.update(answer=f"Fragmento recuperado [{row['id']}]\n{fallback_text}", citations=[row['id']])
         return answer
+    if eligible:
+        selected = [label for label in selected if label in eligible]
+        if not any(owners[label][0] == row['id'] for label in selected):
+            selected = []
     if not selected:
         result = _fallback(evidence, 'El modelo no seleccionó un pasaje. Revisa la coincidencia documental.')
-        result['answer'] = f"Coincidencia documental para revisión [{row['id']}]\n{row['excerpt']}"
+        result['answer'] = f"Coincidencia documental para revisión [{row['id']}]\n{fallback_text}"
         result['citations'] = [row['id']]
         return result
     citations = list(dict.fromkeys(owners[key][0] for key in selected))
@@ -327,7 +414,7 @@ def analyze(payload):
     try:
         retrieval_query, followup = _retrieval_query(case, history)
         evidence = _evidence(buscar_pii_vectorial(
-            retrieval_query, current_app.config['LLM_EVIDENCE_LIMIT'], scope=scope))
+            retrieval_query, current_app.config['LLM_EVIDENCE_LIMIT'], scope=scope, complete_comparison=True))
         if scope == 'normativa':
             guides = buscar_casos_guia(retrieval_query, current_app.config['LLM_GUIDE_LIMIT'])
     except SearchUnavailable as exc:
@@ -335,7 +422,10 @@ def analyze(payload):
     except Exception as exc:
         raise ApiError('No se pudo analizar el caso.', code='case_analysis_failed', status_code=500) from exc
 
-    if not evidence:
+    risks = comparison_codes(retrieval_query) if scope == 'registros' else []
+    if risks:
+        generated = _risk_comparison(risks, evidence)
+    elif not evidence:
         generated = _fallback([], 'No existe evidencia recuperada para fundamentar una conclusión.')
     elif scope != 'normativa':
         previous = next((m['content'] for m in reversed(history) if m['role'] == 'user'), '')
@@ -375,5 +465,5 @@ def analyze(payload):
     audit_service.record('CASE_ANALYSIS', entity_type='legal_provision', detail={
         'count': len(evidence), 'mode': generated['mode'], 'model': generated.get('model')})
     return {**generated, 'scope': scope, 'evidence': evidence, 'case_guides': guides,
-        'notice': ('Simulación académica de matrícula. El operador revisa la evidencia y registra su decisión.' if scope != 'normativa' else 'Análisis académico preliminar basado únicamente en disposiciones verificadas '
+        'notice': ('Texto importado de editables académicos. Las referencias ISO indican la correspondencia propuesta según la guía del curso. La revisión y aprobación requieren evidencia humana.' if scope != 'normativa' else 'Análisis académico preliminar basado únicamente en disposiciones verificadas '
                    'de la base de datos. Confirma vigencia y jerarquía antes de decidir.')}

@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-panel]').forEach(button => { button.onclick = () => showPanel(button.dataset.panel); });
     const guide = {
         Acceso: 'Consulta los datos registrados y usa la IA para localizar documentos. Revisa los fragmentos antes de entregar información.',
+        Oposicion: 'Verifica la identidad por el canal acordado. Identifica el tratamiento cuestionado, deriva las dudas sobre continuidad al coordinador y registra el motivo y alcance de la decisión (D20 §7).',
         Portabilidad: 'Consulta los datos y descarga el JSON portable. La IA te ayuda a localizar documentos adicionales para revisar.',
         Rectificacion: 'Comprueba los datos actuales del titular y guarda la corrección autorizada en Datos del titular.',
         Supresion: 'Revisa la identidad, los datos y los documentos relacionados. La supresión de la base respeta los bloqueos de retención; los documentos se tratan aparte.',
@@ -85,12 +86,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (version !== reviewVersion) return;
         selected = result.data;
         $('detailTitle').textContent = selected.ticket_id;
-        $('caseSummary').textContent = `${selected.request_type} · Documento ${selected.user_id} · ${selected.status}`;
+        $('caseSummary').textContent = `${selected.request_type_label || selected.request_type} · Documento ${selected.user_id} · ${selected.status}`;
         $('caseGuide').textContent = guide[selected.request_type];
         $('subjectId').value = selected.user_id;
         $('query').value = 'datos de contacto, información personal y solicitudes';
         $('scopeSubject').disabled = true; $('scopeSubject').checked = false;
-        $('aiCase').textContent = `Solicitud ${selected.ticket_id} · ${selected.request_type} · Titular ${selected.user_id}`;
+        $('aiCase').textContent = `Solicitud ${selected.ticket_id} · ${selected.request_type_label || selected.request_type} · Titular ${selected.user_id}`;
         $('searchResults').replaceChildren(); $('searchNotice').textContent = '';
         $('detailText').textContent = selected.details || 'Sin detalles adicionales.';
         $('resolutionNote').value = selected.resolution_note || '';
@@ -124,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
         $('dpoTableBody').replaceChildren();
         for (const item of result.data) {
             const row = document.createElement('tr');
-            for (const value of [item.ticket_id, item.user_id, item.request_type, item.status,
+            for (const value of [item.ticket_id, item.user_id, item.request_type_label || item.request_type, item.status,
                 item.sla_days_remaining === null ? 'Cerrado' : `${item.sla_days_remaining} días`]) {
                 const cell = document.createElement('td'); cell.textContent = value; row.append(cell);
             }
@@ -247,6 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = document.createElement('article'); card.className = 'search-result';
             const title = document.createElement('h3'); title.textContent = [item.fuente, item.seccion].filter(Boolean).join(' — ');
             const score = document.createElement('p'); score.className = 'help'; score.textContent = `Relevancia: ${Number(item.score).toFixed(3)}`;
+            if (item.origin) score.textContent = `Texto importado · ${item.origin.file} · ${item.origin.locator} · aprobación humana sin acreditar.`;
             const text = document.createElement('p'); text.className = 'excerpt'; text.textContent = item.texto;
             const copy = document.createElement('button'); copy.type = 'button'; copy.textContent = 'Revisar y ocultar datos de este fragmento';
             copy.onclick = () => { $('redactText').value = item.texto;

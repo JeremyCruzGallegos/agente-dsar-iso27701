@@ -59,6 +59,15 @@ def main():
     result = json.loads(request(BASE + '/api/requests/' + ticket, headers=dpo)[1])
     assert result['data']['ticket_id'] == ticket
     assert request(BASE + '/api/requests/' + ticket + '/report.pdf', headers=dpo)[1].startswith(b'%PDF-')
+    for query, expected, section in [
+        ('Qué cláusulas cita D30', '7.2, 7.3 y A.3.17', 'ficha'),
+        ('D30 segunda constancia simulada', 'Repetir el ejercicio de cierre', '3'),
+    ]:
+        result = json.loads(request(BASE + '/api/case-analysis', headers=dpo,
+                            payload={'case': query, 'scope': 'pims'})[1])['data']
+        first = result['evidence'][0]
+        assert first['record_code'] == section and expected in first['excerpt']
+        assert first['origin']['file'] == 'plantillas/D30.docx'
     print('Compose verificado: Flask/Gunicorn, PostgreSQL, portal, DPO, autenticación, ticket, reintento, PDF y n8n disponible.')
     print('Esta prueba no importa el workflow ni descarga un modelo de IA.')
 

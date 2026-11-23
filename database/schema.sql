@@ -37,6 +37,14 @@ CREATE TABLE IF NOT EXISTS legal_provisions (
     CONSTRAINT uq_source_provision_code UNIQUE (source_id, provision_code)
 );
 
+CREATE TABLE IF NOT EXISTS pims_origins (
+    provision_id INTEGER PRIMARY KEY REFERENCES legal_provisions(id) ON DELETE CASCADE,
+    file VARCHAR(300) NOT NULL,
+    version VARCHAR(40) NOT NULL,
+    locator TEXT NOT NULL,
+    template VARCHAR(300)
+);
+
 CREATE TABLE IF NOT EXISTS legal_relations (
     id SERIAL PRIMARY KEY,
     from_provision_id INTEGER NOT NULL REFERENCES legal_provisions(id) ON DELETE CASCADE,

@@ -2,6 +2,17 @@
 
 El equipo puede atender un caso de rectificación y verificar, en pantalla, la sección que respalda la orientación del agente. El escenario, los roles, los expedientes y la valoración de riesgos corresponden a una implementación universitaria simulada. La identificación de cláusulas y controles sigue la Guía de implementación y trazabilidad, revisión 2, y el diagrama compartidos en el curso.
 
+## Recorrido de la tercera entrega
+
+1. Abre [el catálogo](catalogo.json), localiza D30 y lee el nombre de la plantilla docente. En [D30.docx](plantillas/D30.docx) v0.2 señala el párrafo «Responsable propuesto» anterior al §1. Selecciona **Procedimientos del PIMS** en el chat y pregunta «¿Qué cláusulas o controles cita el plan de capacitación D30?». Abre la evidencia y contrasta archivo, localizador y texto con el Word. La atribución de 7.2, 7.3 y A.3.17 corresponde al material académico.
+2. En una conversación nueva pregunta por el refuerzo pendiente en la tabla de D30. En §3, tabla 1, busca el encabezado «Criterio de seguimiento» y coteja el texto de la segunda fila. La importación conserva también el orden respecto al párrafo anterior.
+3. Abre las hojas **Matrícula** de [D13](plantillas/D13.xlsx) y [D15-MAT](plantillas/D15-MAT.xlsx). En **Registros del ejercicio** pide comparar los índices iniciales y residuales de R01, R02 y R03. Sigue las citas al código y fila de cada hoja. Los residuales son objetivos previstos. La columna de aceptación identifica la decisión que sigue pendiente.
+4. En **Procedimientos del PIMS** pide el plazo legal exacto en días hábiles para rectificar matrícula. Muestra el indicador de cobertura parcial. Repite la pregunta de derivación con identidad verificada y con acreditación pendiente, en conversaciones distintas. Abre D20 §§3 y 2, respectivamente.
+5. En **Registrar solicitud**, selecciona **Oposición** e introduce un titular del ensayo. En el panel DPO filtra por **Oposición**, abre el ticket y muestra el estado recibido. Revisa identidad y tratamiento en el ejercicio, documenta el motivo y alcance de la decisión con referencia a D20 §7 y abre la constancia PDF. El ticket y la bitácora permiten seguir el ensayo.
+6. Muestra [la minuta y la matriz de seguimiento](coordinacion-entrega3.md). Los asuntos pendientes requieren evidencia del grupo correspondiente.
+
+[Informe y comandos de reproducción de la entrega 3](informe-entrega3.md)
+
 ## Arranque en Windows
 
 Abre PowerShell en la carpeta del proyecto con Docker Desktop iniciado. El lanzador admite Python 3.11 o posterior. Usa un intérprete instalado según `py -0p`. Para seleccionar Python 3.14, por ejemplo, usa `py -3.14 iniciar.py --demo`.
@@ -51,7 +62,7 @@ Edita la copia de trabajo que identifica `catalogo.json`. Conserva los apartados
 
 La carga actualiza las secciones por código dentro de una transacción. La consulta del chat utiliza las secciones de la base. El indicador de verificación en estas fuentes identifica texto cotejable contra el archivo de simulación. La revisión del equipo y la aprobación institucional son procesos distintos.
 
-## Evidencia y coordinación pendientes
+## Evidencia histórica de la entrega anterior
 
 El archivo `prueba-integracion.json` guarda consultas, respuestas, modo de ejecución, fuentes y apartados devueltos en una ejecución de la interfaz con DOM automatizado, Flask, PostgreSQL 16.2 y Ollama con Qwen 2.5 1.5B. También se ejecutó una rectificación de correo con un titular ficticio, consulta del D20 desde la API del panel, cambio de correo y cierre del ticket. La constancia emitida por el sistema es [constancia-rectificacion.pdf](constancia-rectificacion.pdf). Las pruebas unitarias incluyen rutas sin modelo. El chat no cambia por sí mismo el expediente del titular.
 

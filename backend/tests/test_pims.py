@@ -1,3 +1,4 @@
+import re
 import shutil
 
 import pytest
@@ -97,7 +98,6 @@ def test_matrix_comparison_reads_current_rows(app, client):
         data = ask(client, 'Contrasta los índices iniciales y residuales de ' + ', '.join(order), 'registros')
         lines = data['answer'].splitlines()[1:4]
         assert [line.split(' | ')[0] for line in lines] == list(order)
-        import re
         expected = {'R01': ('6','4'), 'R02': ('5','3'), 'R03': ('4','3')}
         for risk, line in zip(order, lines):
             assert tuple(re.findall(r'\| (\d+) \[', line)) == expected[risk]
@@ -132,5 +132,28 @@ def test_model_can_select_two_sections(app, client, monkeypatch):
         ids = [next(k for k,v in passages.items() if f'§{section} —' in v) for section in ('2','3')]
         return ids, 'modelo-de-prueba'
     monkeypatch.setattr(llm_service, 'select_passages', choose)
-    data = ask(client, 'D20: acreditación de identidad pendiente y derivación para rectificación de fecha de nacimiento')
+    data = ask(client, 'D20: compara identidad pendiente e identidad verificada en la derivación para rectificación de fecha de nacimiento')
     assert data['mode'] == 'document_selection' and len(set(data['citations'])) == 2
+
+
+def test_selection_incompatible_with_pending_identity_shows_document(app, client, monkeypatch):
+    with app.app_context():
+        import_pims()
+    def wrong_state(question, passages):
+        return [next(k for k, text in passages.items() if 'identidad verificada' in text.lower())], 'simulado'
+    monkeypatch.setattr(llm_service, 'select_passages', wrong_state)
+    result = ask(client, 'D20 identidad pendiente: ¿qué debe hacer el operador antes de la derivación con acreditación?')
+    assert result['mode'] == 'retrieval_only'
+    assert result['evidence'][result['citations'][0]-1]['record_code'] == '2'
+
+
+def test_duration_comes_from_text_and_not_internal_sla(app, client):
+    with app.app_context():
+        import_pims()
+        section = LegalProvision.query.join(LegalSource).filter(
+            LegalSource.code == 'PIMS-SIM-D20', LegalProvision.provision_code == '3').one()
+        section.content += '\nEl reglamento del ensayo fija un plazo legal de 12 días hábiles para rectificar matrícula.'
+        db.session.commit()
+    result = ask(client, 'En D20 ¿qué plazo legal en días hábiles rige para rectificar matrícula?')
+    assert result['coverage'] == 'evidence_found'
+    assert '12 días hábiles' in result['answer']

@@ -311,6 +311,19 @@ def _risk_comparison(codes, evidence):
     return result
 
 
+def _identity_states(text):
+    plain = _plain(text)
+    if not re.search(r'identidad|acreditacion', plain):
+        return set()
+    states = set()
+    if re.search(r'pendiente|falta (?:de )?acreditacion|sin (?:identidad |verificar|acreditar)|no (?:se )?(?:ha )?verific', plain):
+        states.add('pendiente')
+    positive = re.sub(r'(?:no (?:se )?(?:ha )?verific\w* (?:la )?identidad|sin identidad verificada|identidad no verificada)', '', plain)
+    if re.search(r'identidad (?:ya )?(?:fue |esta )?(?:verificada|acreditada)|(?:verifico|acredito) (?:la |su )?identidad', positive):
+        states.add('verificada')
+    return states
+
+
 def _pims_answer(question, evidence):
     passages, owners = {}, {}
     remaining = current_app.config['LLM_CONTEXT_MAX_CHARS']
@@ -318,6 +331,7 @@ def _pims_answer(question, evidence):
     deadline = re.search(r'plazo|cuantos dias|cuanto tiempo|termino legal', plain)
     wants_duration = re.search(r'legal|habiles|exact[oa]|cuantos dias', plain)
     wants_approval = 'aprob' in plain and re.search(r'fecha|quien|cuando|firma', plain)
+    wants_table = re.search(r'\b(tabla|celda)\b', plain)
     course_refs = re.search(r'clausul|controles|referencias', plain)
     candidates = []
     for row in evidence:
@@ -325,8 +339,11 @@ def _pims_answer(question, evidence):
             if not paragraph.strip() or paragraph.startswith(('|---', '| Momento simulado')):
                 continue
             normalized = _plain(paragraph)
+            if (wants_table and not (row.get('origin') or {}).get('file', '').endswith('.xlsx')
+                    and not (re.match(r'Tabla \d+, fila \d+:', paragraph) or paragraph.startswith('|'))):
+                continue
             if deadline and wants_duration:
-                if not (re.search(r'\b(?:\d+|[a-z]+) dias? (?:habiles|calendario|naturales)', normalized)
+                if not (re.search(r'\b(?:\d+|un[oa]?|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|quince|veinte|treinta) dias? (?:habi(?:l|les)|calendario|natural(?:es)?)\b', normalized)
                         and re.search(r'legal|ley|reglamento', normalized)
                         and not re.search(r'sla|plazo interno', normalized)):
                     continue
@@ -344,7 +361,7 @@ def _pims_answer(question, evidence):
         result = _fallback(evidence, reason)
         result.update(answer=f"{reason} [{first['id']}]", coverage='partial', citations=[first['id']])
         return result
-    # Distribuir el contexto entre apartados antes de añadir sus siguientes párrafos.
+    # Alternar apartados dentro del presupuesto de contexto.
     for row, idx, paragraph in sorted(candidates, key=lambda item: item[1]):
         label = f"{row['id']}.{idx}"
         descriptor = f"{row['source']} §{row['section']} — {paragraph}"
@@ -353,7 +370,14 @@ def _pims_answer(question, evidence):
             owners[label] = (row['id'], paragraph)
             remaining -= len(descriptor)
     row, _, fallback_text = candidates[0]
-    if not (deadline and wants_duration or course_refs or wants_approval):
+    if not (deadline and wants_duration or course_refs or wants_approval or wants_table):
+        fallback_text = row['excerpt']
+    requested_states = _identity_states(question)
+    eligible = {label for label, passage in passages.items()
+                if len(requested_states) == 1 and requested_states <= _identity_states(passage)}
+    if eligible:
+        eligible_rows = {owners[label][0] for label in eligible}
+        row = next(item for item in evidence if item['id'] in eligible_rows)
         fallback_text = row['excerpt']
     try:
         selected, model = llm_service.select_passages(question, passages) if passages else ([], None)
@@ -361,6 +385,10 @@ def _pims_answer(question, evidence):
         answer = _fallback(evidence, str(exc))
         answer.update(answer=f"Fragmento recuperado [{row['id']}]\n{fallback_text}", citations=[row['id']])
         return answer
+    if eligible:
+        selected = [label for label in selected if label in eligible]
+        if not any(owners[label][0] == row['id'] for label in selected):
+            selected = []
     if not selected:
         result = _fallback(evidence, 'El modelo no seleccionó un pasaje. Revisa la coincidencia documental.')
         result['answer'] = f"Coincidencia documental para revisión [{row['id']}]\n{fallback_text}"
@@ -386,7 +414,7 @@ def analyze(payload):
     try:
         retrieval_query, followup = _retrieval_query(case, history)
         evidence = _evidence(buscar_pii_vectorial(
-            retrieval_query, current_app.config['LLM_EVIDENCE_LIMIT'], scope=scope))
+            retrieval_query, current_app.config['LLM_EVIDENCE_LIMIT'], scope=scope, complete_comparison=True))
         if scope == 'normativa':
             guides = buscar_casos_guia(retrieval_query, current_app.config['LLM_GUIDE_LIMIT'])
     except SearchUnavailable as exc:

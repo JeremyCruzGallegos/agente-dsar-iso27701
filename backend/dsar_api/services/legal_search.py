@@ -82,11 +82,11 @@ def _score(query_tokens, provision):
 def comparison_codes(question):
     plain = _plain(question)
     if re.search(r'compar|contrast|indice|residual|inicial|aceptaci', plain):
-        return list(dict.fromkeys(re.findall(r'\br\d+\b', plain.upper(), re.I)))
+        return list(dict.fromkeys(re.findall(r'\bR\d+\b', plain.upper())))
     return []
 
 
-def buscar_normativa(query_text, k=5, *, user_id=None, scope="normativa"):
+def buscar_normativa(query_text, k=5, *, user_id=None, scope="normativa", complete_comparison=False):
     """Devuelve disposiciones verificadas y vigentes ordenadas por coincidencia."""
     del user_id  # El corpus normativo no contiene datos personales de titulares.
     query = validar_consulta(query_text, k)
@@ -106,7 +106,8 @@ def buscar_normativa(query_text, k=5, *, user_id=None, scope="normativa"):
     if risks:
         rows = [row for row in rows if row.provision_code in risks and row.origin
                 and row.origin.file.endswith('.xlsx')]
-        k = len(rows)
+        if complete_comparison:
+            k = len(rows)
     if scope in SCOPES:
         codes = {row.source.code[len(PREFIX):].lower() for row in rows}
         requested = codes.intersection(re.findall(r'[a-z0-9]+(?:-[a-z0-9]+)*', _plain(query)))

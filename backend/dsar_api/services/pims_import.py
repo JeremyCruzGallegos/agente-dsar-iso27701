@@ -124,7 +124,7 @@ def import_pims():
                 row.content = body
                 row.sort_order = order
                 row.verified = True  # Texto copiado del archivo identificado en el catálogo académico.
-            if not seen:
+            if not seen or seen == {'ficha'}:
                 raise ValueError(f'{code} no contiene apartados consultables.')
             for old in previous.values():
                 db.session.delete(old)

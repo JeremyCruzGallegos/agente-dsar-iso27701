@@ -1,0 +1,234 @@
+{
+  "browser": "158.0.4370.33",
+  "consultas": [
+    {
+      "question": "¿Qué cláusulas o controles cita el plan de capacitación D30?",
+      "mode": "retrieval_only",
+      "model": null,
+      "coverage": "evidence_found",
+      "answer": "Coincidencia documental para revisión [1]\nResponsable propuesto: Coordinación de privacidad. Referencia según la guía del curso: 7.2, 7.3 y A.3.17.",
+      "fuentes": [
+        {
+          "id": 1,
+          "documento": "PIMS-SIM-D30 — Plan de capacitación y concienciación · v0.2 · simulación académica",
+          "apartado": "ficha — Ficha documental y referencias de curso",
+          "origen": {
+            "file": "plantillas/D30.docx",
+            "locator": "Antes del primer apartado",
+            "status": "imported",
+            "template": "Plan_de_capacitacion_y_concienciacion_ES.docx",
+            "version": "0.2"
+          }
+        }
+      ],
+      "indicador": "Consulta documental · sin conclusión generada."
+    },
+    {
+      "question": "D30: ¿qué criterio de seguimiento se propone para el refuerzo pendiente en la tabla?",
+      "mode": "document_selection",
+      "model": "qwen2.5:1.5b",
+      "coverage": "evidence_found",
+      "answer": "Tabla 1, fila 2: Campo del registro propuesto: Refuerzo pendiente | Criterio de seguimiento: Repetir el ejercicio de cierre con una segunda constancia simulada [1]",
+      "fuentes": [
+        {
+          "id": 1,
+          "documento": "PIMS-SIM-D30 — Plan de capacitación y concienciación · v0.2 · simulación académica",
+          "apartado": "3 — Coordinador y control de competencia",
+          "origen": {
+            "file": "plantillas/D30.docx",
+            "locator": "3. Coordinador y control de competencia",
+            "status": "imported",
+            "template": "Plan_de_capacitacion_y_concienciacion_ES.docx",
+            "version": "0.2"
+          }
+        }
+      ],
+      "indicador": "Pasajes seleccionados por qwen2.5:1.5b · texto del ejercicio académico"
+    },
+    {
+      "question": "Compara los índices iniciales y residuales de R01, R02 y R03",
+      "mode": "document_comparison",
+      "model": null,
+      "coverage": "evidence_found",
+      "answer": "Riesgo | Índice inicial | Residual previsto | Estado de aceptación\nR01 | 6 [1] | 4 [4] | Pendiente del propietario [4]\nR02 | 5 [2] | 3 [5] | Pendiente del propietario [5]\nR03 | 4 [3] | 3 [6] | Pendiente del propietario [6]\nEl residual previsto es una meta cuya eficacia requiere verificación.",
+      "fuentes": [
+        {
+          "id": 1,
+          "documento": "PIMS-SIM-D13 — Evaluación de riesgos de matrícula · v0.1 · simulación académica",
+          "apartado": "R01 — Entrega a tercero",
+          "origen": {
+            "file": "plantillas/D13.xlsx",
+            "locator": "Matrícula, fila 3 (R01)",
+            "status": "imported",
+            "template": "Apendice_1_Cuadro_de_evaluacion_de_riesgos_ES.xlsx",
+            "version": "0.1"
+          }
+        },
+        {
+          "id": 4,
+          "documento": "PIMS-SIM-D15-MAT — Tratamiento de riesgos de matrícula · v0.1 · simulación académica",
+          "apartado": "R01 — Entrega a tercero",
+          "origen": {
+            "file": "plantillas/D15-MAT.xlsx",
+            "locator": "Matrícula, fila 3 (R01)",
+            "status": "imported",
+            "template": "Apendice_2_Cuadro_de_tratamiento_de_riesgos_ES.xlsx",
+            "version": "0.1"
+          }
+        },
+        {
+          "id": 2,
+          "documento": "PIMS-SIM-D13 — Evaluación de riesgos de matrícula · v0.1 · simulación académica",
+          "apartado": "R02 — Rectificación errónea",
+          "origen": {
+            "file": "plantillas/D13.xlsx",
+            "locator": "Matrícula, fila 4 (R02)",
+            "status": "imported",
+            "template": "Apendice_1_Cuadro_de_evaluacion_de_riesgos_ES.xlsx",
+            "version": "0.1"
+          }
+        },
+        {
+          "id": 5,
+          "documento": "PIMS-SIM-D15-MAT — Tratamiento de riesgos de matrícula · v0.1 · simulación académica",
+          "apartado": "R02 — Rectificación errónea",
+          "origen": {
+            "file": "plantillas/D15-MAT.xlsx",
+            "locator": "Matrícula, fila 4 (R02)",
+            "status": "imported",
+            "template": "Apendice_2_Cuadro_de_tratamiento_de_riesgos_ES.xlsx",
+            "version": "0.1"
+          }
+        },
+        {
+          "id": 3,
+          "documento": "PIMS-SIM-D13 — Evaluación de riesgos de matrícula · v0.1 · simulación académica",
+          "apartado": "R03 — Cierre sin constancia",
+          "origen": {
+            "file": "plantillas/D13.xlsx",
+            "locator": "Matrícula, fila 5 (R03)",
+            "status": "imported",
+            "template": "Apendice_1_Cuadro_de_evaluacion_de_riesgos_ES.xlsx",
+            "version": "0.1"
+          }
+        },
+        {
+          "id": 6,
+          "documento": "PIMS-SIM-D15-MAT — Tratamiento de riesgos de matrícula · v0.1 · simulación académica",
+          "apartado": "R03 — Cierre sin constancia",
+          "origen": {
+            "file": "plantillas/D15-MAT.xlsx",
+            "locator": "Matrícula, fila 5 (R03)",
+            "status": "imported",
+            "template": "Apendice_2_Cuadro_de_tratamiento_de_riesgos_ES.xlsx",
+            "version": "0.1"
+          }
+        }
+      ],
+      "indicador": "Comparación documental de las matrices importadas."
+    },
+    {
+      "question": "¿Cuál es el plazo legal exacto en días hábiles para rectificar matrícula?",
+      "mode": "retrieval_only",
+      "model": null,
+      "coverage": "partial",
+      "answer": "Los apartados consultados de PIMS-SIM-D20 — Atención de derechos de los titulares · v0.1 · simulación académica no especifican el plazo legal exacto en días. [1]",
+      "fuentes": [
+        {
+          "id": 1,
+          "documento": "PIMS-SIM-D20 — Atención de derechos de los titulares · v0.1 · simulación académica",
+          "apartado": "3 — Derivación y rectificación de fecha de nacimiento en matrícula",
+          "origen": {
+            "file": "D20.md",
+            "locator": "3. Derivación y rectificación de fecha de nacimiento en matrícula",
+            "status": "imported",
+            "template": null,
+            "version": "0.1"
+          }
+        }
+      ],
+      "indicador": "Cobertura parcial · faltan datos en los documentos consultados."
+    },
+    {
+      "question": "Ya se verificó la identidad. Para rectificar la fecha de nacimiento en matrícula, ¿a quién se deriva y qué registra el operador?",
+      "mode": "document_selection",
+      "model": "qwen2.5:1.5b",
+      "coverage": "evidence_found",
+      "answer": "Con la identidad verificada, el operador deriva al responsable funcional de matrícula y registra destinatario, fecha y estado. [1]",
+      "fuentes": [
+        {
+          "id": 1,
+          "documento": "PIMS-SIM-D20 — Atención de derechos de los titulares · v0.1 · simulación académica",
+          "apartado": "3 — Derivación y rectificación de fecha de nacimiento en matrícula",
+          "origen": {
+            "file": "D20.md",
+            "locator": "3. Derivación y rectificación de fecha de nacimiento en matrícula",
+            "status": "imported",
+            "template": null,
+            "version": "0.1"
+          }
+        }
+      ],
+      "indicador": "Pasajes seleccionados por qwen2.5:1.5b · texto del ejercicio académico"
+    },
+    {
+      "question": "La acreditación de identidad está pendiente. ¿Qué hace el operador de recepción?",
+      "mode": "retrieval_only",
+      "model": null,
+      "coverage": "evidence_found",
+      "answer": "Coincidencia documental para revisión [1]\nEl operador asigna un código y registra fecha, derecho solicitado, sistema afectado, descripción y canal de respuesta. Acusa recibo por el canal acordado. Verifica la identidad mediante el canal autenticado del ejercicio y, cuando actúa un representante, su facultad para solicitar la actuación. Registra el resultado de la verificación. Si falta acreditación o información indispensable, especifica qué falta, comunica cómo aportarlo y deja el expediente pendiente. Restringe el acceso al expediente al personal encargado.",
+      "fuentes": [
+        {
+          "id": 1,
+          "documento": "PIMS-SIM-D20 — Atención de derechos de los titulares · v0.1 · simulación académica",
+          "apartado": "2 — Recepción y acreditación de identidad pendiente",
+          "origen": {
+            "file": "D20.md",
+            "locator": "2. Recepción y acreditación de identidad pendiente",
+            "status": "imported",
+            "template": null,
+            "version": "0.1"
+          }
+        }
+      ],
+      "indicador": "Consulta documental · sin conclusión generada."
+    },
+    {
+      "question": "¿Cuántos satélites orbitan Júpiter?",
+      "mode": "retrieval_only",
+      "model": null,
+      "coverage": "insufficient_evidence",
+      "answer": "No se encontró sustento suficiente en la documentación indexada. No corresponde inventar una conclusión; incorpora una fuente aplicable o reformula el caso.",
+      "fuentes": [],
+      "indicador": "Sin evidencia para esta consulta."
+    },
+    {
+      "question": "¿Qué referencias cita D30?",
+      "mode": "retrieval_only",
+      "model": null,
+      "coverage": "evidence_found",
+      "answer": "Fragmento recuperado [1]\nResponsable propuesto: Coordinación de privacidad. Referencia según la guía del curso: 7.2, 7.3 y A.3.17.",
+      "fuentes": [
+        {
+          "id": 1,
+          "documento": "PIMS-SIM-D30 — Plan de capacitación y concienciación · v0.2 · simulación académica",
+          "apartado": "ficha — Ficha documental y referencias de curso",
+          "origen": {
+            "file": "plantillas/D30.docx",
+            "locator": "Antes del primer apartado",
+            "status": "imported",
+            "template": "Plan_de_capacitacion_y_concienciacion_ES.docx",
+            "version": "0.2"
+          }
+        }
+      ],
+      "indicador": "Consulta documental · sin conclusión generada."
+    }
+  ],
+  "oposicion": {
+    "ticket": "DSAR-2AA7F677",
+    "decision_simulada": "Simulación D20 §7: se admite la oposición al uso complementario de matrícula. Se mantiene el registro principal.",
+    "estado": "Completado",
+    "historial": "23/11/2026, 4:42:53 p. m. · Estado actualizado · Completado23/11/2026, 4:42:53 p. m. · Estado actualizado · Completado23/11/2026, 4:42:53 p. m. · Estado actualizado · Completado23/11/2026, 4:42:51 p. m. · Solicitud registrada · Completado"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "postgresql": 190000,
+  "baseline": "a9420a4",
+  "anteriores": 38,
+  "actuales": 45,
+  "documentos": 11,
+  "ids_previos_conservados": 38,
+  "segunda_importacion_estable": true,
+  "ticket_historico": "DSAR-7945088D"
+}

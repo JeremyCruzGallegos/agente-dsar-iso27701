@@ -1,4 +1,5 @@
 """Constancia del expediente: metadatos y auditoría sin reproducir PII."""
+from datetime import datetime, timezone
 from io import BytesIO
 from xml.sax.saxutils import escape
 
@@ -27,7 +28,8 @@ def request_pdf(ticket_id):
     rows = [["Fecha UTC", "Acción", "Resultado"]]
     for entry in reversed(logs):
         item = entry.to_dict()
-        rows.append([Paragraph(escape(item["timestamp"]), styles["BodyText"]),
+        utc_time = datetime.fromisoformat(item["timestamp"]).astimezone(timezone.utc)
+        rows.append([Paragraph(utc_time.strftime("%Y-%m-%d %H:%M:%S"), styles["BodyText"]),
                      Paragraph(escape(item["action"]), styles["BodyText"]),
                      Paragraph(escape(item["outcome"]), styles["BodyText"])])
     table = Table(rows, colWidths=[6 * cm, 7 * cm, 3 * cm], repeatRows=1)

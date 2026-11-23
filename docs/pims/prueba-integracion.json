@@ -1,0 +1,134 @@
+[
+  {
+    "caso": "Completo",
+    "pregunta": "Ya se verificó la identidad. Para rectificar la fecha de nacimiento en matrícula, ¿a quién se deriva y qué registra el operador?",
+    "modo": "retrieval_only",
+    "modelo": null,
+    "cobertura": "evidence_found",
+    "respuesta": "Coincidencia documental para revisión [1]\nCon la identidad verificada, el operador deriva al responsable funcional de matrícula y registra destinatario, fecha y estado.\n\nPara rectificar un dato de matrícula, como el correo o la fecha de nacimiento, el responsable contrasta el dato cuestionado con el sustento presentado por canal privado. Si coincide con la corrección solicitada, registra la decisión y actualiza el registro académico simulado. Si el sustento resulta ambiguo, documenta la discrepancia y consulta al coordinador antes de modificar el dato.",
+    "citas": [
+      1
+    ],
+    "evidencia": [
+      {
+        "id": 1,
+        "documento": "PIMS-SIM-D20 — Atención de derechos de los titulares · v0.1 · simulación académica",
+        "apartado": "3 — Derivación y rectificación de fecha de nacimiento en matrícula"
+      },
+      {
+        "id": 2,
+        "documento": "PIMS-SIM-D20 — Atención de derechos de los titulares · v0.1 · simulación académica",
+        "apartado": "2 — Recepción y acreditación de identidad pendiente"
+      },
+      {
+        "id": 3,
+        "documento": "PIMS-SIM-D30 — Plan de capacitación y concienciación · v0.1 · simulación académica",
+        "apartado": "2 — Responsable funcional de matrícula"
+      },
+      {
+        "id": 4,
+        "documento": "PIMS-SIM-D20 — Atención de derechos de los titulares · v0.1 · simulación académica",
+        "apartado": "1 — Alcance y responsables"
+      },
+      {
+        "id": 5,
+        "documento": "PIMS-SIM-D20 — Atención de derechos de los titulares · v0.1 · simulación académica",
+        "apartado": "4 — Comunicación y cierre"
+      }
+    ],
+    "limites": [
+      "El modelo no seleccionó un pasaje. Revisa la coincidencia documental."
+    ]
+  },
+  {
+    "caso": "Incompleto",
+    "pregunta": "La acreditación de identidad está pendiente. ¿Qué hace el operador de recepción?",
+    "modo": "document_selection",
+    "modelo": "qwen2.5:1.5b",
+    "cobertura": "evidence_found",
+    "respuesta": "El operador asigna un código y registra fecha, derecho solicitado, sistema afectado, descripción y canal de respuesta. Acusa recibo por el canal acordado. Verifica la identidad mediante el canal autenticado del ejercicio y, cuando actúa un representante, su facultad para solicitar la actuación. Registra el resultado de la verificación. Si falta acreditación o información indispensable, especifica qué falta, comunica cómo aportarlo y deja el expediente pendiente. Restringe el acceso al expediente al personal encargado. [1]",
+    "citas": [
+      1
+    ],
+    "evidencia": [
+      {
+        "id": 1,
+        "documento": "PIMS-SIM-D20 — Atención de derechos de los titulares · v0.1 · simulación académica",
+        "apartado": "2 — Recepción y acreditación de identidad pendiente"
+      },
+      {
+        "id": 2,
+        "documento": "PIMS-SIM-D30 — Plan de capacitación y concienciación · v0.1 · simulación académica",
+        "apartado": "1 — Operador de recepción"
+      },
+      {
+        "id": 3,
+        "documento": "PIMS-SIM-D15-PLAN — Plan de tratamiento de riesgos · v0.1 · simulación académica",
+        "apartado": "1 — R01 Entrega a un tercero"
+      },
+      {
+        "id": 4,
+        "documento": "PIMS-SIM-D20 — Atención de derechos de los titulares · v0.1 · simulación académica",
+        "apartado": "1 — Alcance y responsables"
+      },
+      {
+        "id": 5,
+        "documento": "PIMS-SIM-D20 — Atención de derechos de los titulares · v0.1 · simulación académica",
+        "apartado": "3 — Derivación y rectificación de fecha de nacimiento en matrícula"
+      }
+    ],
+    "limites": []
+  },
+  {
+    "caso": "Sin cobertura",
+    "pregunta": "¿Cuántos satélites orbitan Júpiter?",
+    "modo": "retrieval_only",
+    "modelo": null,
+    "cobertura": "insufficient_evidence",
+    "respuesta": "No se encontró sustento suficiente en la documentación indexada. No corresponde inventar una conclusión; incorpora una fuente aplicable o reformula el caso.",
+    "citas": [],
+    "evidencia": [],
+    "limites": [
+      "No existe evidencia recuperada para fundamentar una conclusión."
+    ]
+  },
+  {
+    "caso": "Registro",
+    "pregunta": "¿Qué ocurrió en SIM-001 con la rectificación de matrícula?",
+    "modo": "document_selection",
+    "modelo": "qwen2.5:1.5b",
+    "cobertura": "evidence_found",
+    "respuesta": "| 10:00 | Responsable funcional de matrícula | Contrasta el registro con el sustento ficticio. Confirma error de transcripción, acepta la rectificación y registra la actualización en SIM-001-B. | [1]\n\n| 10:15 | Responsable funcional de matrícula | Revisa el alcance del cambio. En este caso ficticio el dato solo estaba en matrícula. | [1]\n\n| 10:30 | Operador | Comunica la rectificación por el canal verificado, registra constancia SIM-001-C y cierra sin actuaciones pendientes. | [1]",
+    "citas": [
+      1
+    ],
+    "evidencia": [
+      {
+        "id": 1,
+        "documento": "PIMS-SIM-SIM-001 — Expediente de rectificación de matrícula · v0.1 · simulación académica",
+        "apartado": "1 — Actuaciones de rectificación SIM-001"
+      },
+      {
+        "id": 2,
+        "documento": "PIMS-SIM-D13 — Evaluación de riesgos de matrícula · v0.1 · simulación académica",
+        "apartado": "R02 — Rectificación errónea"
+      },
+      {
+        "id": 3,
+        "documento": "PIMS-SIM-D15-MAT — Tratamiento de riesgos de matrícula · v0.1 · simulación académica",
+        "apartado": "R02 — Rectificación errónea"
+      },
+      {
+        "id": 4,
+        "documento": "PIMS-SIM-D13 — Evaluación de riesgos de matrícula · v0.1 · simulación académica",
+        "apartado": "R01 — Entrega a tercero"
+      },
+      {
+        "id": 5,
+        "documento": "PIMS-SIM-D15-MAT — Tratamiento de riesgos de matrícula · v0.1 · simulación académica",
+        "apartado": "R01 — Entrega a tercero"
+      }
+    ],
+    "limites": []
+  }
+]

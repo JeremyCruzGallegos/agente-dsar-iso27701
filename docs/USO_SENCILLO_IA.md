@@ -13,11 +13,11 @@ Desde la raíz del proyecto:
 
 ```powershell
 docker compose up -d postgres
-py -3.12 iniciar.py --demo
+py iniciar.py --demo
 ```
 
 El comando crea `.venv`, instala dependencias, genera las claves locales, crea las tablas y abre
-el proyecto. `--demo` agrega titulares ficticios para probar el módulo DSAR, pero no inventa normas.
+el proyecto. `--demo` agrega titulares ficticios y carga las nueve adaptaciones junto al D20 y SIM-001. En el chat, selecciona los procedimientos o los registros del ejercicio.
 
 Si `backend/.env` ya existía con SQLite, reemplaza su `DATABASE_URL` por:
 

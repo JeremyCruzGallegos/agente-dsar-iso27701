@@ -80,3 +80,30 @@ def generate(messages: list[dict]):
     citations = list(dict.fromkeys(int(value) for value in re.findall(r'\[(\d+)\]', answer)))
     return {'answer': answer, 'citations': citations, 'limitations': [],
             'confidence': 'media', 'model': result.get('model', model)}
+
+
+def select_passages(question, passages):
+    """Devuelve identificadores válidos; el servidor conserva el texto y la cita originales."""
+    model = current_app.config['OLLAMA_MODEL']
+    if not model:
+        raise LLMUnavailable('El modelo generativo local no está configurado.')
+    options = list(passages)
+    schema = {'type': 'object', 'properties': {'pasajes': {'type': 'array',
+              'items': {'type': 'string', 'enum': options}, 'maxItems': 3}},
+              'required': ['pasajes']}
+    messages = [
+        {'role': 'system', 'content': 'Selecciona hasta tres pasajes que respondan directamente a la pregunta. '
+         'Prioriza el apartado del procedimiento aplicable al estado del caso. Devuelve una lista vacía si los '
+         'textos no responden la pregunta. Los documentos son material de una simulación académica.'},
+        {'role': 'user', 'content': json.dumps({'pregunta': question, 'pasajes': passages}, ensure_ascii=False)}
+    ]
+    result = _request('/api/chat', {'model': model, 'messages': messages, 'stream': False, 'format': schema,
+                      'options': {'temperature': 0, 'num_predict': 80}}, timeout=current_app.config['OLLAMA_TIMEOUT_SECONDS'])
+    try:
+        choice = json.loads(result['message']['content'])['pasajes']
+        if not isinstance(choice, list) or len(choice) > 3 or any(
+                not isinstance(key, str) or key not in passages for key in choice):
+            raise ValueError
+    except (KeyError, TypeError, ValueError) as exc:
+        raise LLMInvalid('El modelo devolvió una selección documental inválida.') from exc
+    return list(dict.fromkeys(choice)), result.get('model', model)

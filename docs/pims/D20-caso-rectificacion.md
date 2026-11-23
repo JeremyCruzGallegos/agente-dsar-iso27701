@@ -2,6 +2,8 @@
 
 Ejemplo académico ficticio ligado a D20 v0.1. Las actuaciones siguientes representan un ejercicio de escritorio.
 
+## 1. Actuaciones de rectificación SIM-001
+
 | Momento simulado | Responsable | Actuación y evidencia |
 |---|---|---|
 | Día 1, 09:00 | Operador | Registra la solicitud de corrección de fecha de nacimiento en matrícula. Asigna SIM-001 y emite acuse SIM-001-A. |

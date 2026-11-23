@@ -27,7 +27,7 @@ def main():
     from dsar_api import create_app
     app = create_app()
     runner = app.test_cli_runner()
-    for command in (['init-db', 'seed-demo'] if args.demo else ['init-db']):
+    for command in (['init-db', 'seed-demo', 'import-pims'] if args.demo else ['init-db']):
         result = runner.invoke(args=[command])
         if result.exit_code:
             raise RuntimeError(f'Falló {command}: {result.output}') from result.exception

@@ -280,19 +280,56 @@ def _generate_with_citation_retry(messages, evidence=None):
     return retried
 
 
+def _pims_answer(question, evidence):
+    passages, owners = {}, {}
+    remaining = current_app.config['LLM_CONTEXT_MAX_CHARS']
+    # El modelo selecciona pasajes del apartado mejor ubicado. El operador puede abrir los demás.
+    row = evidence[0]
+    for idx, paragraph in enumerate(row['excerpt'].splitlines(), 1):
+        paragraph = paragraph.strip()
+        if not paragraph or paragraph.startswith(('|---', '| Momento simulado')):
+            continue
+        label = str(idx)
+        descriptor = f"{row['section']} — {paragraph}"
+        if len(descriptor) <= remaining:
+            passages[label] = descriptor
+            owners[label] = (row['id'], paragraph)
+            remaining -= len(descriptor)
+    try:
+        selected, model = llm_service.select_passages(question, passages) if passages else ([], None)
+    except (llm_service.LLMInvalid, llm_service.LLMUnavailable) as exc:
+        answer = _fallback(evidence, str(exc))
+        first = evidence[0]
+        answer.update(answer=f"Fragmento recuperado [{first['id']}]\n{first['excerpt']}", citations=[first['id']])
+        return answer
+    if not selected:
+        result = _fallback(evidence, 'El modelo no seleccionó un pasaje. Revisa la coincidencia documental.')
+        result['answer'] = f"Coincidencia documental para revisión [{row['id']}]\n{row['excerpt']}"
+        result['citations'] = [row['id']]
+        return result
+    citations = list(dict.fromkeys(owners[key][0] for key in selected))
+    return {'answer': '\n\n'.join(f"{owners[key][1]} [{owners[key][0]}]" for key in selected),
+            'mode': 'document_selection', 'coverage': 'evidence_found', 'confidence': 'documental',
+            'model': model, 'citations': citations, 'limitations': []}
+
+
 def analyze(payload):
     payload = require_json(payload)
     try:
         case = validar_consulta(payload.get('case'), 12)
     except ValueError as exc:
         raise ValidationError(str(exc).replace('query', 'case')) from exc
+    scope = payload.get('scope', 'normativa')
+    if scope not in ('normativa', 'pims', 'registros'):
+        raise ValidationError('Selecciona normativa, pims o registros.')
     history = _history(payload.get('history'))
     guides = []
     try:
         retrieval_query, followup = _retrieval_query(case, history)
         evidence = _evidence(buscar_pii_vectorial(
-            retrieval_query, current_app.config['LLM_EVIDENCE_LIMIT']))
-        guides = buscar_casos_guia(retrieval_query, current_app.config['LLM_GUIDE_LIMIT'])
+            retrieval_query, current_app.config['LLM_EVIDENCE_LIMIT'], scope=scope))
+        if scope == 'normativa':
+            guides = buscar_casos_guia(retrieval_query, current_app.config['LLM_GUIDE_LIMIT'])
     except SearchUnavailable as exc:
         raise ApiError(str(exc), code='case_analysis_unavailable', status_code=503) from exc
     except Exception as exc:
@@ -300,6 +337,10 @@ def analyze(payload):
 
     if not evidence:
         generated = _fallback([], 'No existe evidencia recuperada para fundamentar una conclusión.')
+    elif scope != 'normativa':
+        previous = next((m['content'] for m in reversed(history) if m['role'] == 'user'), '')
+        question = f'{previous}\n{case}' if followup and previous else case
+        generated = _pims_answer(question, evidence)
     else:
         try:
             generated = _generate_with_citation_retry(_messages(
@@ -333,6 +374,6 @@ def analyze(payload):
 
     audit_service.record('CASE_ANALYSIS', entity_type='legal_provision', detail={
         'count': len(evidence), 'mode': generated['mode'], 'model': generated.get('model')})
-    return {**generated, 'evidence': evidence, 'case_guides': guides,
-        'notice': ('Análisis académico preliminar basado únicamente en disposiciones verificadas '
+    return {**generated, 'scope': scope, 'evidence': evidence, 'case_guides': guides,
+        'notice': ('Simulación académica de matrícula. El operador revisa la evidencia y registra su decisión.' if scope != 'normativa' else 'Análisis académico preliminar basado únicamente en disposiciones verificadas '
                    'de la base de datos. Confirma vigencia y jerarquía antes de decidir.')}

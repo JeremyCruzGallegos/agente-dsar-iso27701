@@ -235,6 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const version = reviewVersion;
         $('searchResults').replaceChildren(); $('searchNotice').textContent = 'Consultando disposiciones verificadas…';
         const payload = {query: $('query').value, k: 5};
+        if ($('searchScope').value !== 'normativa') payload.scope = $('searchScope').value;
         let result;
         try { result = await api('/vector-search', { method: 'POST', body: JSON.stringify(payload) }); }
         catch (error) { if (key && version === reviewVersion) $('searchNotice').textContent = 'La búsqueda no se pudo completar. Comprueba el estado de IA de arriba.'; throw error; }
@@ -244,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
             : 'No se encontraron disposiciones verificadas relacionadas.';
         for (const item of result.data.results) {
             const card = document.createElement('article'); card.className = 'search-result';
-            const title = document.createElement('h3'); title.textContent = item.fuente;
+            const title = document.createElement('h3'); title.textContent = [item.fuente, item.seccion].filter(Boolean).join(' — ');
             const score = document.createElement('p'); score.className = 'help'; score.textContent = `Relevancia: ${Number(item.score).toFixed(3)}`;
             const text = document.createElement('p'); text.className = 'excerpt'; text.textContent = item.texto;
             const copy = document.createElement('button'); copy.type = 'button'; copy.textContent = 'Revisar y ocultar datos de este fragmento';

@@ -1,0 +1,90 @@
+[
+  {
+    "code": "D11",
+    "title": "Control de documentos y registros",
+    "file": "plantillas/D11.docx",
+    "template": "Procedimiento_para_control_de_documentos_y_registros_ES.docx",
+    "kind": "procedimiento",
+    "version": "0.1"
+  },
+  {
+    "code": "D12",
+    "title": "Metodología de evaluación y tratamiento",
+    "file": "plantillas/D12.docx",
+    "template": "Metodologia_de_evaluacion_y_tratamiento_de_riesgos_ES.docx",
+    "kind": "procedimiento",
+    "version": "0.1"
+  },
+  {
+    "code": "D15-PLAN",
+    "title": "Plan de tratamiento de riesgos",
+    "file": "plantillas/D15-PLAN.docx",
+    "template": "Plan_de_tratamiento_del_riesgo_ES.docx",
+    "kind": "procedimiento",
+    "version": "0.1"
+  },
+  {
+    "code": "D13-INF",
+    "title": "Informe de evaluación y tratamiento",
+    "file": "plantillas/D13-INF.docx",
+    "template": "Apendice_3_Informe_sobre_evaluacion_y_tratamiento_ES.docx",
+    "kind": "registro",
+    "version": "0.1"
+  },
+  {
+    "code": "D30",
+    "title": "Plan de capacitación y concienciación",
+    "file": "plantillas/D30.docx",
+    "template": "Plan_de_capacitacion_y_concienciacion_ES.docx",
+    "kind": "procedimiento",
+    "version": "0.1"
+  },
+  {
+    "code": "D34",
+    "title": "Procedimiento de medidas correctivas",
+    "file": "plantillas/D34.docx",
+    "template": "Procedimiento_para_medidas_correctivas_ES.docx",
+    "kind": "procedimiento",
+    "version": "0.1"
+  },
+  {
+    "code": "D34-AC01",
+    "title": "Formulario de medida correctiva AC01",
+    "file": "plantillas/D34-AC01.docx",
+    "template": "Apendice_Formulario_para_medidas_correctivas_ES.docx",
+    "kind": "registro",
+    "version": "0.1"
+  },
+  {
+    "code": "D13",
+    "title": "Evaluación de riesgos de matrícula",
+    "file": "plantillas/D13.xlsx",
+    "template": "Apendice_1_Cuadro_de_evaluacion_de_riesgos_ES.xlsx",
+    "kind": "registro",
+    "version": "0.1"
+  },
+  {
+    "code": "D15-MAT",
+    "title": "Tratamiento de riesgos de matrícula",
+    "file": "plantillas/D15-MAT.xlsx",
+    "template": "Apendice_2_Cuadro_de_tratamiento_de_riesgos_ES.xlsx",
+    "kind": "registro",
+    "version": "0.1"
+  },
+  {
+    "code": "D20",
+    "title": "Atención de derechos de los titulares",
+    "file": "D20.md",
+    "template": null,
+    "kind": "procedimiento",
+    "version": "0.1"
+  },
+  {
+    "code": "SIM-001",
+    "title": "Expediente de rectificación de matrícula",
+    "file": "D20-caso-rectificacion.md",
+    "template": null,
+    "kind": "registro",
+    "version": "0.1"
+  }
+]

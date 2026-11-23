@@ -59,7 +59,7 @@ def main():
     result = json.loads(request(BASE + '/api/requests/' + ticket, headers=dpo)[1])
     assert result['data']['ticket_id'] == ticket
     assert request(BASE + '/api/requests/' + ticket + '/report.pdf', headers=dpo)[1].startswith(b'%PDF-')
-    print('Compose verificado: Flask/Gunicorn, SQLite, portal, DPO, autenticación, ticket, reintento, PDF y n8n disponible.')
+    print('Compose verificado: Flask/Gunicorn, PostgreSQL, portal, DPO, autenticación, ticket, reintento, PDF y n8n disponible.')
     print('Esta prueba no importa el workflow ni descarga un modelo de IA.')
 
 

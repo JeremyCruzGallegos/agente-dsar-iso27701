@@ -1,5 +1,7 @@
 # Base de datos normativa del agente
 
+El flujo de demostración incorpora un catálogo propio de procedimientos y registros académicos. Sus archivos, referencias y resultados están en [PIMS de matrícula](pims/README.md).
+
 El agente ya no lee PDF, TXT ni Markdown. Su contexto procede de PostgreSQL y se organiza así:
 
 - `legal_sources`: identifica la ley, reglamento, estándar ISO, norma institucional o jurisprudencia.

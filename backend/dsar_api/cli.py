@@ -25,6 +25,13 @@ def register_cli(app) -> None:
         db.session.commit()
         click.echo("Base de datos lista.")
 
+    @app.cli.command("import-pims")
+    def load_pims():
+        """Importa procedimientos y registros académicos desde sus archivos editables."""
+        from .services.pims_import import import_pims
+        sources, count = import_pims()
+        click.echo(f"PIMS simulado: {sources} documentos, {count} apartados.")
+
     @app.cli.command("seed-demo")
     def seed_demo():
         """Datos de ejemplo para probar el frontend (incluye un titular con retención)."""

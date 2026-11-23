@@ -15,9 +15,14 @@ def search(payload):
     except ValueError as exc:
         raise ValidationError(str(exc)) from exc
     user_id = clean_document_id(payload['user_id']) if 'user_id' in payload else None
+    scope = payload.get('scope', 'normativa')
+    if scope not in ('normativa', 'pims', 'registros'):
+        raise ValidationError('Selecciona normativa, pims o registros.')
+    options = {'user_id': user_id} if user_id is not None else {}
+    if scope != 'normativa':
+        options['scope'] = scope
     try:
-        results = (buscar_pii_vectorial(query, k, user_id=user_id) if user_id is not None
-                   else buscar_pii_vectorial(query, k))
+        results = buscar_pii_vectorial(query, k, **options)
     except SearchUnavailable as exc:
         raise ApiError(str(exc), code='vector_search_unavailable', status_code=503) from exc
     except Exception as exc:

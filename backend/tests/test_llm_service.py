@@ -27,3 +27,11 @@ def test_empty_response_is_rejected(app):
     with app.app_context(), patch.object(llm_service, '_request', return_value=raw):
         with pytest.raises(llm_service.LLMInvalid):
             llm_service.generate([])
+
+
+@pytest.mark.parametrize('response', ['{"pasajes":["9.1"]}', '{"pasajes":"1.1"}', '{}'])
+def test_selection_rejects_invalid_passage_ids(app, response):
+    app.config['OLLAMA_MODEL'] = 'modelo-prueba'
+    with app.app_context(), patch.object(llm_service, '_request', return_value={'message': {'content': response}}):
+        with pytest.raises(llm_service.LLMInvalid):
+            llm_service.select_passages('¿Qué se registra?', {'1.1': 'Fecha y estado.'})

@@ -11,6 +11,9 @@ from ..extensions import db
 from ..models import InstitutionalCaseGuide, LegalProvision, LegalSource
 
 
+from .pims_import import PREFIX, SCOPES
+
+
 class SearchUnavailable(RuntimeError):
     pass
 
@@ -32,7 +35,7 @@ def _plain(value):
 
 def _tokens(value):
     return {token for token in re.findall(r"[a-z0-9]{3,}", _plain(value))
-            if token not in {"para", "como", "esta", "este", "debe", "datos", "sobre"}}
+            if token not in {"para", "como", "esta", "este", "debe", "datos", "sobre", "que", "una", "del", "las", "los", "por", "con", "sus", "son", "hay", "cual", "segun", "quien", "tiene", "hacer", "puede"}}
 
 
 QUERY_EQUIVALENTS = {
@@ -76,15 +79,20 @@ def _score(query_tokens, provision):
     return score / math.sqrt(max(1, len(query_tokens)))
 
 
-def buscar_normativa(query_text, k=5, *, user_id=None):
+def buscar_normativa(query_text, k=5, *, user_id=None, scope="normativa"):
     """Devuelve disposiciones verificadas y vigentes ordenadas por coincidencia."""
     del user_id  # El corpus normativo no contiene datos personales de titulares.
     query = validar_consulta(query_text, k)
     tokens = _query_tokens(query)
     try:
-        rows = (LegalProvision.query.join(LegalSource)
-                .filter(LegalProvision.verified.is_(True), LegalSource.status == "active")
-                .all())
+        query_rows = (LegalProvision.query.join(LegalSource)
+                .filter(LegalProvision.verified.is_(True), LegalSource.status == "active"))
+        simulated = LegalSource.code.startswith(PREFIX)
+        if scope in SCOPES:
+            query_rows = query_rows.filter(simulated, LegalSource.notes == SCOPES[scope])
+        else:
+            query_rows = query_rows.filter(~simulated)
+        rows = query_rows.all()
     except Exception as exc:
         raise SearchUnavailable("No se pudo consultar el corpus normativo en la base de datos.") from exc
     ranked = [(row, _score(tokens, row)) for row in rows]
@@ -95,7 +103,7 @@ def buscar_normativa(query_text, k=5, *, user_id=None):
         "fuente": f"{row.source.code} — {row.source.title}",
         "seccion": " — ".join(filter(None, (row.provision_code, row.heading))),
         "score": round(float(score), 6),
-        "source_type": ("institutional" if row.source.source_type == "institutional" else "normative"),
+        "source_type": (scope if scope in SCOPES else "institutional" if row.source.source_type == "institutional" else "normative"),
         "database_source_type": row.source.source_type,
         "source_id": row.source_id,
         "provision_id": row.id,
@@ -108,7 +116,7 @@ def buscar_exacta(term):
     pattern = f"%{term}%"
     rows = (LegalProvision.query.join(LegalSource)
             .filter(LegalProvision.verified.is_(True), LegalSource.status == "active",
-                    LegalProvision.content.ilike(pattern)).limit(50).all())
+                    ~LegalSource.code.startswith(PREFIX), LegalProvision.content.ilike(pattern)).limit(50).all())
     return [{"texto": row.content, "fuente": f"{row.source.code} — {row.source.title}",
              "seccion": row.provision_code, "score": 1.0,
              "source_type": row.source.source_type, "provision_id": row.id}
@@ -124,6 +132,7 @@ def estado_corpus():
         ready = bool(provisions)
         return {"ready": ready, "documents": sources, "chunks": provisions,
                 "sources": sources, "provisions": provisions,
+                "pims_sources": LegalSource.query.filter(LegalSource.code.startswith(PREFIX), LegalSource.status == "active").count(),
                 "case_guides": guides,
                 "message": ("Corpus normativo de base de datos listo."
                             if ready else "La base no contiene disposiciones verificadas.")}

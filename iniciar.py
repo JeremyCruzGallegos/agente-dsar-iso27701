@@ -21,7 +21,7 @@ def run(*args):
 
 
 def prepare_dependencies(skip_install=False):
-    names = ('flask', 'flask_sqlalchemy', 'flask_cors', 'dotenv', 'reportlab')
+    names = ('flask', 'flask_sqlalchemy', 'flask_cors', 'dotenv', 'reportlab', 'psycopg', 'docx', 'openpyxl')
     missing = [name for name in names if importlib.util.find_spec(name) is None]
     digest = hashlib.sha256(b''.join((ROOT / p).read_bytes() for p in
         ('backend/requirements.txt',))).hexdigest()

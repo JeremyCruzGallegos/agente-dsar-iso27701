@@ -1,9 +1,9 @@
 # Agente normativo y de derechos — ISO/IEC 27001/27701
 
 Proyecto académico para analizar casos de derechos y privacidad en el contexto universitario.
-El contexto del agente se almacena de forma estructurada en PostgreSQL; no lee PDF, TXT ni
-Markdown. Ollama redacta la conclusión exclusivamente a partir de artículos y cláusulas
-verificados recuperados de la base.
+El agente consulta PostgreSQL. En el ejercicio PIMS de matrícula, Ollama selecciona pasajes de los documentos y la aplicación muestra el texto con su versión y apartado. La consulta normativa conserva su flujo de análisis con citas. La demostración carga once documentos académicos y sus registros.
+
+[Guía de demostración, correspondencia con las plantillas y resultados de prueba](docs/pims/README.md)
 
 ISO/IEC 27001 no es una ley. Las leyes peruanas, reglamentos, normas institucionales UNSA y
 cláusulas ISO autorizadas se registran como fuentes distintas, conservando entidad emisora,
@@ -30,7 +30,7 @@ Requisitos: Python 3.11+, Docker Desktop y Ollama.
 
 ```powershell
 docker compose up -d postgres
-py -3.12 iniciar.py --demo
+py iniciar.py --demo
 ```
 
 Para habilitar conclusiones generativas:

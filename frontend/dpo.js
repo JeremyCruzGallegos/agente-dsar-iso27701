@@ -247,6 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = document.createElement('article'); card.className = 'search-result';
             const title = document.createElement('h3'); title.textContent = [item.fuente, item.seccion].filter(Boolean).join(' — ');
             const score = document.createElement('p'); score.className = 'help'; score.textContent = `Relevancia: ${Number(item.score).toFixed(3)}`;
+            if (item.origin) score.textContent = `Texto importado · ${item.origin.file} · ${item.origin.locator} · aprobación humana sin acreditar.`;
             const text = document.createElement('p'); text.className = 'excerpt'; text.textContent = item.texto;
             const copy = document.createElement('button'); copy.type = 'button'; copy.textContent = 'Revisar y ocultar datos de este fragmento';
             copy.onclick = () => { $('redactText').value = item.texto;

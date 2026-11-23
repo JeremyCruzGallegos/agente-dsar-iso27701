@@ -77,6 +77,23 @@ class LegalProvision(db.Model):
         }
 
 
+class PimsOrigin(db.Model):
+    """Procedencia de un apartado importado. No representa una aprobación."""
+    __tablename__ = "pims_origins"
+
+    provision_id = db.Column(db.ForeignKey("legal_provisions.id", ondelete="CASCADE"), primary_key=True)
+    file = db.Column(db.String(300), nullable=False)
+    version = db.Column(db.String(40), nullable=False)
+    locator = db.Column(db.Text, nullable=False)
+    template = db.Column(db.String(300))
+    provision = db.relationship(LegalProvision, backref=db.backref("origin", uselist=False,
+                                cascade="all, delete-orphan"))
+
+    def to_dict(self):
+        return {"file": self.file, "version": self.version, "locator": self.locator,
+                "template": self.template, "status": "imported"}
+
+
 class LegalRelation(db.Model):
     __tablename__ = "legal_relations"
     __table_args__ = (db.UniqueConstraint(

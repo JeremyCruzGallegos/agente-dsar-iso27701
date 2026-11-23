@@ -79,6 +79,13 @@ def _score(query_tokens, provision):
     return score / math.sqrt(max(1, len(query_tokens)))
 
 
+def comparison_codes(question):
+    plain = _plain(question)
+    if re.search(r'compar|contrast|indice|residual|inicial|aceptaci', plain):
+        return list(dict.fromkeys(re.findall(r'\br\d+\b', plain.upper(), re.I)))
+    return []
+
+
 def buscar_normativa(query_text, k=5, *, user_id=None, scope="normativa"):
     """Devuelve disposiciones verificadas y vigentes ordenadas por coincidencia."""
     del user_id  # El corpus normativo no contiene datos personales de titulares.
@@ -95,10 +102,25 @@ def buscar_normativa(query_text, k=5, *, user_id=None, scope="normativa"):
         rows = query_rows.all()
     except Exception as exc:
         raise SearchUnavailable("No se pudo consultar el corpus normativo en la base de datos.") from exc
+    risks = comparison_codes(query) if scope == "registros" else []
+    if risks:
+        rows = [row for row in rows if row.provision_code in risks and row.origin
+                and row.origin.file.endswith('.xlsx')]
+        k = len(rows)
+    if scope in SCOPES:
+        codes = {row.source.code[len(PREFIX):].lower() for row in rows}
+        requested = codes.intersection(re.findall(r'[a-z0-9]+(?:-[a-z0-9]+)*', _plain(query)))
+        if requested:
+            rows = [row for row in rows if row.source.code[len(PREFIX):].lower() in requested]
     ranked = [(row, _score(tokens, row)) for row in rows]
+    if scope in SCOPES and re.search(r'clausul|control(?:es)? (?:cita|menciona)|referencia', _plain(query)):
+        ranked = [(row, score + (8 if score and row.provision_code == 'ficha' else 0))
+                  for row, score in ranked]
     ranked = [(row, score) for row, score in ranked if score > 0]
     ranked.sort(key=lambda item: (-item[1], item[0].source.code, item[0].sort_order))
     return [{
+        "origin": row.origin.to_dict() if scope in SCOPES and row.origin else None,
+        "record_code": row.provision_code,
         "texto": row.content,
         "fuente": f"{row.source.code} — {row.source.title}",
         "seccion": " — ".join(filter(None, (row.provision_code, row.heading))),

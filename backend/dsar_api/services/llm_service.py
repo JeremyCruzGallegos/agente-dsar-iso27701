@@ -102,7 +102,7 @@ def select_passages(question, passages):
     try:
         choice = json.loads(result['message']['content'])['pasajes']
         if not isinstance(choice, list) or len(choice) > 3 or any(
-                not isinstance(key, str) or key not in passages for key in choice):
+                not isinstance(key, str) or not isinstance(key, str) or key not in passages for key in choice):
             raise ValueError
     except (KeyError, TypeError, ValueError) as exc:
         raise LLMInvalid('El modelo devolvió una selección documental inválida.') from exc

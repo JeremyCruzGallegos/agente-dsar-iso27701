@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
             meta.textContent = data.mode === 'generative_rag'
                 ? `Conclusión generada por ${data.model} · confianza ${data.confidence}`
                 : data.mode === 'document_selection' ? `Pasajes seleccionados por ${data.model} · texto del ejercicio académico`
+                : data.coverage === 'partial' ? 'Cobertura parcial · faltan datos en los documentos consultados.'
+                : data.mode === 'document_comparison' && data.citations.length ? 'Comparación documental de las matrices importadas.'
                 : data.coverage === 'insufficient_evidence' ? 'Sin evidencia para esta consulta.' : 'Consulta documental · sin conclusión generada.';
             article.append(meta);
             if (data.limitations?.length) {
@@ -59,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 title.textContent = `[${item.id}] ${item.source}${item.section ? ' — ' + item.section : ''}${kind}`;
                 const score = document.createElement('p'); score.className = 'help'; score.textContent = `Similitud temática: ${Number(item.score).toFixed(3)}`;
                 const excerpt = document.createElement('p'); excerpt.className = 'excerpt'; excerpt.textContent = item.excerpt;
+                if (item.origin) score.textContent = `Texto importado del editable · ${item.origin.file} · ${item.origin.locator} · aprobación humana sin acreditar.`;
                 card.append(title, score, excerpt); evidence.append(card);
             }
             details.append(summary, evidence); article.append(details);
@@ -87,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!index.ready) throw new Error(index.message);
             $('workspace').classList.remove('hidden'); $('loginForm').classList.add('hidden');
             $('logoutButton').classList.remove('hidden'); $('newChatButton').classList.remove('hidden');
-            $('status').textContent = `Base lista: ${index.sources ?? index.documents} fuentes, ${index.provisions ?? index.chunks} disposiciones verificadas y ${index.case_guides ?? 0} casos guía UNSA.`;
+            $('status').textContent = `Base lista: ${index.sources ?? index.documents} fuentes, ${index.provisions ?? index.chunks} apartados consultables y ${index.case_guides ?? 0} casos guía UNSA.`;
             $('scope').value = index.pims_sources ? 'pims' : 'normativa';
             $('modelStatus').textContent = generator.message;
             $('apiKey').value = ''; resetConversation();

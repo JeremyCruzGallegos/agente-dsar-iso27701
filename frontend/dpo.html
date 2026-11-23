@@ -40,7 +40,7 @@
 <form id="rectifyForm" class="hidden"><h3>Corregir datos</h3><label for="subjectName">Nombre corregido</label><input id="subjectName" maxlength="200"><label for="subjectEmail">Correo corregido</label><input id="subjectEmail" type="email" maxlength="254"><button>Guardar rectificación</button></form></section>
 </section>
 <section id="aiPanel" class="panel-section hidden">
-<section class="card"><h2>Búsqueda documental</h2><p>Describe el caso. El sistema recupera artículos y cláusulas verificadas de la base.</p>
+<section class="card"><h2>Búsqueda documental</h2><p>Describe el caso. Selecciona el ámbito para recuperar normas o apartados importados de los editables del ejercicio.</p>
 <div class="ai-health"><p id="aiStatus" role="status">Comprobando IA local…</p><button type="button" id="refreshAI">Comprobar de nuevo</button></div>
 <p id="aiCase" class="guide-box">Selecciona una solicitud para consultar normativa relacionada, o realiza una búsqueda general.</p>
 <form id="searchForm"><label for="searchScope">Documentos que quieres consultar</label><select id="searchScope"><option value="normativa">Base normativa</option><option value="pims">Procedimientos del PIMS simulado</option><option value="registros">Registros del ejercicio</option></select><label for="query">¿Qué fundamento necesitas?</label><input id="query" maxlength="4000" required placeholder="Por ejemplo: ejercicio del derecho de acceso"><div class="check-line hidden"><input type="checkbox" id="scopeSubject" disabled><label for="scopeSubject">Filtro no aplicable al corpus normativo</label></div><button id="searchButton">Buscar documentos</button></form>

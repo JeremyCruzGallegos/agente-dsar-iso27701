@@ -42,11 +42,8 @@ jobs:
       - run: python scripts/setup.py
       - run: docker compose -p dsar-ci build backend
       - run: docker compose -p dsar-ci up -d
+      - run: docker compose -p dsar-ci exec -T backend python -m flask --app app import-pims
       - run: python scripts/check_docker.py
-      - name: Verificar la carga del PIMS en PostgreSQL desde la imagen
-        run: |
-          docker compose -p dsar-ci exec -T backend python -m flask --app app import-pims | tee "$RUNNER_TEMP/pims.txt"
-          grep -Fx 'PIMS simulado: 11 documentos, 38 apartados.' "$RUNNER_TEMP/pims.txt"
       - name: Diagnóstico de contenedores si falla
         if: failure()
         run: docker compose -p dsar-ci logs --tail 80

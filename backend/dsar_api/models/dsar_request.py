@@ -13,6 +13,12 @@ class RequestType(str, enum.Enum):
     SUPRESION = "Supresion"
     RECTIFICACION = "Rectificacion"
     PORTABILIDAD = "Portabilidad"
+    OPOSICION = "Oposicion"
+
+    @property
+    def label(self):
+        return {"Supresion": "Supresión", "Rectificacion": "Rectificación",
+                "Oposicion": "Oposición"}.get(self.value, self.value)
 
 
 class RequestStatus(str, enum.Enum):
@@ -87,6 +93,7 @@ class DsarRequest(db.Model):
             "ticket_id": self.ticket_id,
             "user_id": self.document_id,
             "request_type": self.request_type.value,
+            "request_type_label": self.request_type.label,
             "status": self.status.value,
             "details": self.details,
             "resolution_note": self.resolution_note,

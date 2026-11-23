@@ -18,7 +18,7 @@ def request_pdf(ticket_id):
     stream = BytesIO()
     styles = getSampleStyleSheet()
     story = [Paragraph("Constancia de solicitud DSAR", styles["Title"]), Spacer(1, 0.6 * cm)]
-    for label, field in (("Ticket", "ticket_id"), ("Derecho solicitado", "request_type"),
+    for label, field in (("Ticket", "ticket_id"), ("Derecho solicitado", "request_type_label"),
                          ("Estado", "status"), ("Recepción", "received_at"),
                          ("Fecha límite interna", "due_at"), ("Cierre", "completed_at")):
         story.append(Paragraph(f"<b>{label}:</b> {escape(str(data[field] or 'Pendiente'))}", styles["Normal"]))
